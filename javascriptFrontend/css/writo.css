@@ -1,0 +1,39 @@
+div.paragraph {
+    border: thin gray solid;
+    border-top-color: light-gray;
+    border-bottom-color: transparent;
+    padding: 3px;
+}
+
+body.insert div.active {
+    background-color: papayawhip;
+}
+
+div.active {
+    border-width: 2px;
+    border-bottom-color: gray;
+}
+
+div.paragraph:first-child {
+    border-top-color: gray;
+    -moz-border-radius-topleft: 8px;
+    -moz-border-radius-topright: 8px;
+}
+
+div.paragraph:last-child {
+    border-bottom-color: gray;
+    -moz-border-radius-bottomleft: 8px;
+    -moz-border-radius-bottomright: 8px;
+}
+span.line {
+    margin-right: 0.5em;
+}
+div.active span.line {
+    border: thin lightgray solid;
+    -moz-border-radius: 2px;
+}
+span#cursor {
+    text-decoration: blink;
+    font-weight: bold;
+    font-size: 1.2em;
+}
