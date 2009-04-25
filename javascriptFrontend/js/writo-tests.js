@@ -83,24 +83,20 @@ var functionalTest = function(keys, writo){
         "Undoing, then adding new commands, then undoing again"
     );
     
+    fireunit.key(doc, keys.leftCursor);
+    fireunit.key(doc, keys.leftCursor);
+    fireunit.compare(
+        "ter|ug",
+        $("#DocumentContainer").text(),
+        "Pressing the left cursor twice"
+    );
     
-    /*
-    //test("test the cursor keys", function() {
-    //make sure we're in command mode
-    kp = new $.Event("keypress");
-    kp.keyCode = 27;
-    $(document).trigger(kp)
-    fireunit.ok($("body").hasClass("command"), "Has the body tag the class 'command'?" );
-    //Go to the left
-    kp = new $.Event("keypress");
-    kp.charCode = 104;
-    $(document).trigger(kp)
-    fireunit.compare($("#DocumentContainer").text(),"a|i","Move to the left");
-    //Go to the right
-    kp = new $.Event("keypress");
-    kp.charCode = 108;
-    $(document).trigger(kp)
-    fireunit.compare($("#DocumentContainer").text(),"ai|","Move to the right");
-    */
+    fireunit.key(doc, keys.rightCursor);
+    fireunit.compare(
+        "teru|g",
+        $("#DocumentContainer").text(),
+        "Pressing the right cursor once"
+    );
+    
     fireunit.testDone();
 }
