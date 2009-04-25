@@ -54,7 +54,7 @@ function init($) {
 			// **The editor has two {{{modes}}}** depending on which the character keys are interpreted
             modes = ["insert", "command"],
             undoStack = [],
-            currentUndoPointer = -1,
+            currentUndoPointer = 0,
 			// **These are the three functions** that {{{writo}}} provides.
             performCommand,
             basicCommandHandler,
@@ -322,7 +322,7 @@ function init($) {
 		// ** doUndo ** apparently I lied about the three functions. Here is another one.
         writo.doUndo = function () {
             console.log(currentUndoPointer);
-            if (currentUndoPointer >= 0) {
+            if (currentUndoPointer > 0) {
                 console.debug("undoing");
                 currentUndoPointer -= 1;
                 undoStack[currentUndoPointer].undoCommand();
@@ -334,7 +334,7 @@ function init($) {
         
 		// ** It's hard to explain {{{ doRedo }}} without using the concepts "re" and "do"
         writo.doRedo = function () {
-            if (currentUndoPointer < undoStack.length && undoStack.length !== 0) {
+            if (currentUndoPointer < undoStack.length) {
                 console.debug("redoing");
                 undoStack[currentUndoPointer].doCommand();
                 currentUndoPointer += 1;
