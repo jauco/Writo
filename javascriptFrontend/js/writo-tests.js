@@ -97,6 +97,18 @@ var functionalTest = function(keys, writo){
         $("#DocumentContainer").text(),
         "Pressing the right cursor once"
     );
+
+    fireunit.key(doc, "l");
+    fireunit.key(doc, "l");
+    fireunit.key(doc, "i");//insert mode
+    fireunit.key(doc, " ");
+    fireunit.key(doc, keys.esc);
+    fireunit.compare(
+        "terug |",
+        $("#DocumentContainer").text(),
+        "Walking past the end of the text fails gracefully"
+    );
+    
     
     fireunit.testDone();
 }
