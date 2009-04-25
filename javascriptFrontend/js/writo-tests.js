@@ -83,15 +83,15 @@ var functionalTest = function(keys, writo){
         "Undoing, then adding new commands, then undoing again"
     );
     
-    fireunit.key(doc, keys.leftCursor);
-    fireunit.key(doc, keys.leftCursor);
+    fireunit.key(doc, "h");
+    fireunit.key(doc, "h");
     fireunit.compare(
         "ter|ug",
         $("#DocumentContainer").text(),
         "Pressing the left cursor twice"
     );
     
-    fireunit.key(doc, keys.rightCursor);
+    fireunit.key(doc, "l");
     fireunit.compare(
         "teru|g",
         $("#DocumentContainer").text(),

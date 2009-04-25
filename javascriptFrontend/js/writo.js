@@ -79,7 +79,6 @@ function init($) {
 		// {{{if else }}} constructs at the cost of having less explicit functions//
         performCommand = function () { 
             var COMMANDS = {
-                
 				// ** {{{insChar }}}**
                 // Appends a character to the current element.
                 // * {{{commandID:}}} can be used to later identify the command.
@@ -109,7 +108,7 @@ function init($) {
                   // * {{{moveFunc: }}} a classname or other jQuery expression to determine how far the cursor moves
                   // * {{{direction: }}} "prev" or "next"
                 moveCursor : function (args) {
-                    var retVal = {
+                    var command = {
                             "continueUndo" : true, 
                             "commandID": args[0]
                         },
@@ -132,18 +131,18 @@ function init($) {
 
                     //if the newLocation exists
                     if ($("#cursor")[direction](moveFunc).length > 0) {
-                        retVal.doCommand = function () {
+                        command.doCommand = function () {
                             moveCursor($("#cursor")[direction](moveFunc), direction);
                         };
-                        retVal.undoCommand = function () {
+                        command.undoCommand = function () {
                             moveCursor($("#cursor")[direction](moveFunc), direction);
                         };
                     }
                     else {
-                        retVal.doCommand = function () {};
-                        retVal.undoCommand = function () {};
+                        command.doCommand = function () {};
+                        command.undoCommand = function () {};
                     }
-                    return retVal;
+                    return command;
                 },
 				
 				// ** {{{ DeleteChar }}} **
@@ -200,8 +199,11 @@ function init($) {
 			
             return function (commandID) {
                 var command;
-                console.group("create command");
+                console.group("create command", commandID, arguments);
+                command = COMMANDS[commandID];
+                console.debug(command);
                 command = COMMANDS[commandID](arguments); 
+                console.debug(command);
                 command.doCommand();
                 console.info("currentUndoPointer: ", currentUndoPointer)
                 if (currentUndoPointer !== undoStack.length) {
@@ -272,22 +274,15 @@ function init($) {
                             cmdCount = 1;
                         }
                         cmdType = key;
+                        console.info("It's the '"+cmdType+"' key");
                         if (cmdType === 'i') {
-                            console.info("It's the 'i' key");
                             handlingInsert = true;
                             writo.setEditMode("insert");
                         }
-                        if (cmdType === 'u') {
-                            console.info("It's the 'u' key");
+                        if ("urhl".has(cmdType)){
+                            //these commands do not accept motions
                             executeCommand = true;
-                            writo.doUndo();
                         }
-                        if (cmdType === 'r') {
-                            console.info("It's the 'r' key");
-                            executeCommand = true;
-                            writo.doRedo();
-                        }
-                        
                     }
                     //This is the second key after the numeric ones (the motion)
                     else {
@@ -298,6 +293,25 @@ function init($) {
                 }
                 //If a complete command has been specified, then execute it.
                 if (executeCommand === true) {
+                    console.log("complete command");
+                    if (cmdType == 'u'){
+                        writo.doUndo();
+                    }
+                    else if (cmdType == 'r'){
+                        writo.doRedo();
+                    }
+                    else if (cmdType == "i"){
+                        //ignore for now. Only useful when command multiplication is reenabled
+                    }
+                    else if (cmdType == "h"){
+                        performCommand("moveCursor", "prev", ".char");
+                    }
+                    else if (cmdType == "l"){
+                        performCommand("moveCursor", "next", ".char");
+                    }
+                    else {
+                        
+                    }
                     console.groupEnd();
                     clearVars();
                 }
@@ -321,7 +335,6 @@ function init($) {
 
 		// ** doUndo ** apparently I lied about the three functions. Here is another one.
         writo.doUndo = function () {
-            console.log(currentUndoPointer);
             if (currentUndoPointer > 0) {
                 console.debug("undoing");
                 currentUndoPointer -= 1;
