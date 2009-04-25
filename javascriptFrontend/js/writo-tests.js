@@ -11,12 +11,26 @@ var functionalTest = function(keys, writo){
         "Test if document is empty, except for cursor"
     );
 
-    fireunit.key(doc, "i");
+    fireunit.key(doc, "u");//insert mode
+    fireunit.compare(
+        false, 
+        writo.commandInProgress,
+        "Pressing undo when nothing is done yet, should gracefully fail, by doing nothing"
+    );
+    
+    fireunit.key(doc, "r");//insert mode
+    fireunit.compare(
+        false, 
+        writo.commandInProgress,
+        "Pressing redo when nothing is done yet, should gracefully fail, by doing nothing"
+    );
+    
+    fireunit.key(doc, "i");//insert mode
     fireunit.ok(
         $("body").hasClass("insert"), 
         "Pressing 'i' puts writo in insert mode"
     );
-    fireunit.key(doc, keys.esc);
+    fireunit.key(doc, keys.esc);//command mode
     fireunit.ok(
         $("body").hasClass("command"), 
         "Pressing 'esc' puts writo back in command mode"
@@ -27,42 +41,41 @@ var functionalTest = function(keys, writo){
         $("#DocumentContainer").text(),
         "Switching shouldn't change the document"
     );
-    fireunit.key(doc, "i");
+    fireunit.key(doc, "i");//insert mode
     fireunit.key(doc, "t");
     fireunit.key(doc, "e");
     fireunit.key(doc, "s");
     fireunit.key(doc, "t");
-    fireunit.key(doc, keys.esc);
+    fireunit.key(doc, keys.esc);//command mode
     fireunit.compare(
         "test|",
         $("#DocumentContainer").text(),
         "Adding text works"
     );
-    writo.doUndo();
-    writo.doUndo();
-    writo.doUndo();
+    fireunit.key(doc, "u");//undo
+    fireunit.key(doc, "u");//undo
+    fireunit.key(doc, "u");//undo
     fireunit.compare(
         "t|",
         $("#DocumentContainer").text(),
         "Undoing multiple times works"
     );
-    writo.doRedo();
-    writo.doRedo();
-    writo.doRedo();
+    fireunit.key(doc, "r");//redo
+    fireunit.key(doc, "r");//redo
     fireunit.compare(
-        "test|",
+        "tes|",
         $("#DocumentContainer").text(),
         "Redoing multiple times works"
     );
     
-    writo.doUndo();
-    writo.doUndo();
-    fireunit.key(doc, "i");
+    fireunit.key(doc, "u");//undo
+    fireunit.key(doc, "i");//insert mode
     fireunit.key(doc, "r");
     fireunit.key(doc, "u");
     fireunit.key(doc, "g");
     fireunit.key(doc, "k");
-    writo.doUndo();
+    fireunit.key(doc, keys.esc);
+    fireunit.key(doc, "u");//undo
     
     fireunit.compare(
         "terug|",

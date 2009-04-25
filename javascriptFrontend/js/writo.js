@@ -54,24 +54,26 @@ function init($) {
 			// **The editor has two {{{modes}}}** depending on which the character keys are interpreted
             modes = ["insert", "command"],
             undoStack = [],
-            currentUndoPointer = 0,
+            currentUndoPointer = -1,
 			// **These are the three functions** that {{{writo}}} provides.
             performCommand,
             basicCommandHandler,
             insertCommandHandler;
 
+        writo.commandInProgress = false;
 		// == Command objects ==
 		// Writo is created in a pluggable way, all commands that the user can execute are
 		// written as seperate functions that are then passed around and will
 		// eventually be persisted. This part of the code shows how the commands are created.
-		
-        // ** {{{performCommand }}} **
+        //
+        //  ** {{{performCommand }}} **
 		// In the last part of the code you'll see that I link key presses to 
 		// command objects. The function performCommand actually creates these
 		// command objects. The first part will define all possible commands. 
 		// If you want to know how they are used, you can scroll to the part
 		// labeled "**Returning the command objects**"
-		// 
+		// Each function in COMMANDS will return an object with a doCommand and undoCommand function.
+        //
 		// //I'm defining the functions to accept an args array parameter instead of actually passing the values. This
 		// allows me to construct the parameter sequence piece by piece and then pass it to the command. This saves me some
 		// {{{if else }}} constructs at the cost of having less explicit functions//
@@ -189,6 +191,9 @@ function init($) {
             };
 			
 			// ** Returning the command objects **\\
+            // Ok, this will be the actual performCommand function as far as the rest
+            // of the code is concerned.
+            //
 			// Now that we've declared all possible commands, the following 
 			// statement actually returns one. It also makes sure that the 
 			// command is placed on the undo stack.
@@ -240,8 +245,10 @@ function init($) {
                 cmdCount    = 0;
                 cmdType    = "";
                 cmdMov = "";
+                writo.commandInProgress = false;
             }
             return function (key, keyType) {
+                writo.commandInProgress = true;
                 console.info("running basic command handler: ", key, keyType);
                 //First, let's see if we are returning from an insert session
                 if (handlingInsert) {
@@ -266,25 +273,32 @@ function init($) {
                         }
                         cmdType = key;
                         if (cmdType === 'i') {
+                            console.info("It's the 'i' key");
                             handlingInsert = true;
                             writo.setEditMode("insert");
                         }
+                        if (cmdType === 'u') {
+                            console.info("It's the 'u' key");
+                            executeCommand = true;
+                            writo.doUndo();
+                        }
+                        if (cmdType === 'r') {
+                            console.info("It's the 'r' key");
+                            executeCommand = true;
+                            writo.doRedo();
+                        }
+                        
                     }
                     //This is the second key after the numeric ones (the motion)
                     else {
+                        console.info("doing the motion");
                         cmdMov = key;
                         executeCommand = true;
                     }
                 }
                 //If a complete command has been specified, then execute it.
                 if (executeCommand === true) {
-                    //if handlingInsert then command was executed once
-                    for (var i = handlingInsert ? 1 : 0; i < cmdCount; i += 1) {
-                        undoStack.push(
-                            //The last command will stop the undo chain.
-                            //createCommand(cmdType, cmdMov, i === cmdCount-1)
-                        );
-                    }
+                    console.groupEnd();
                     clearVars();
                 }
             };
@@ -307,18 +321,26 @@ function init($) {
 
 		// ** doUndo ** apparently I lied about the three functions. Here is another one.
         writo.doUndo = function () {
-            currentUndoPointer -= 1;
-            undoStack[currentUndoPointer].undoCommand();
+            console.log(currentUndoPointer);
+            if (currentUndoPointer >= 0) {
+                console.debug("undoing");
+                currentUndoPointer -= 1;
+                undoStack[currentUndoPointer].undoCommand();
+            }
+            else {
+                console.warn("There's nothing to undo")
+            }
         };
         
 		// ** It's hard to explain {{{ doRedo }}} without using the concepts "re" and "do"
         writo.doRedo = function () {
-            if (currentUndoPointer < undoStack.length) {
+            if (currentUndoPointer < undoStack.length && undoStack.length !== 0) {
+                console.debug("redoing");
                 undoStack[currentUndoPointer].doCommand();
                 currentUndoPointer += 1;
             }
             else {
-                console.warning("There's nothing to redo")
+                console.warn("There's nothing to redo")
             }
         };
         
@@ -342,9 +364,11 @@ function init($) {
             }
             $("body").addClass(newMode);
             if (newMode === "command") {
+                console.info("Going to command mode");
                 writo.commandHandler = basicCommandHandler;
             }
             else {
+                console.info("Going to insert mode");
                 writo.commandHandler = insertCommandHandler;
             }
         };
