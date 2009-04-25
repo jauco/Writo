@@ -109,6 +109,10 @@ var functionalTest = function(keys, writo){
         "Walking past the end of the text fails gracefully"
     );
     
-    
+    fireunit.key(doc, "b");
+    fireunit.ok(
+        $("#DocumentContainer > div").hasClass("heading"), 
+        "Pressing 'b' will apply the style 'header' to the current paragraph"
+    );
     fireunit.testDone();
 }
