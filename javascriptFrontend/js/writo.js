@@ -100,6 +100,23 @@ function init($) {
                     };
                     return command;
                 },
+                // ** {{{setStyle }}}**
+                // Adds a class to the current paragraph div.
+                addClass: function (args) {
+                    var command = {"continueUndo": args[2]},
+                        className;
+                    className = args[1];
+                    command.name = "addclass: "+className;
+                    var targetParagraph;
+                    command.doCommand = function () {
+                        targetParagraph = $(".active");
+                        targetParagraph.addClass(className);
+                    };
+                    command.undoCommand = function () {
+                        targetParagraph.removeClass(className);
+                    };
+                    return command;
+                },
                 // ** {{{ moveCursor }}} **
 				// Returns a function that will move the cursor a specific step in a 
                   // specific direction. Or just an empty dummy if the target location 
@@ -279,7 +296,7 @@ function init($) {
                             handlingInsert = true;
                             writo.setEditMode("insert");
                         }
-                        if ("urhl".has(cmdType)){
+                        if ("urhlb".has(cmdType)){
                             //these commands do not accept motions
                             executeCommand = true;
                         }
@@ -305,6 +322,9 @@ function init($) {
                     }
                     else if (cmdType == "h"){
                         performCommand("moveCursor", "prev", ".char");
+                    }
+                    else if (cmdType == "b"){
+                        performCommand("addClass", "heading");
                     }
                     else if (cmdType == "l"){
                         performCommand("moveCursor", "next", ".char");

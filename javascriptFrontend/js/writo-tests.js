@@ -112,7 +112,14 @@ var functionalTest = function(keys, writo){
     fireunit.key(doc, "b");
     fireunit.ok(
         $("#DocumentContainer > div").hasClass("heading"), 
-        "Pressing 'b' will apply the style 'header' to the current paragraph"
+        "Pressing 'b' will apply the style 'heading' to the current paragraph"
     );
+
+    fireunit.key(doc, "u");
+    fireunit.ok(
+        !$("#DocumentContainer > div").hasClass("heading"), 
+        "Setting heading can be undone"
+    );
+
     fireunit.testDone();
 }

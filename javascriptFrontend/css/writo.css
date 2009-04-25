@@ -1,3 +1,9 @@
+
+ .heading {
+    font-size: 2em;
+    font-weight: bold;
+ }
+
 div.paragraph {
     border: thin gray solid;
     border-top-color: light-gray;
