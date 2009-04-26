@@ -180,16 +180,15 @@ function init($) {
 			
             return function (commandID) {
                 var command;
-                console.group("create command", commandID, arguments);
                 command = COMMANDS[commandID](arguments); 
                 command.commandID = commandID;
                 command.doCommand();
+                console.warn(command.toSource());
                 if (currentUndoPointer !== undoStack.length) {
                     undoStack.splice(currentUndoPointer, undoStack.length - currentUndoPointer);
                 }
                 undoStack.push(command);
                 currentUndoPointer = undoStack.length;
-                console.groupEnd();
                 return command;
             };
         }();
@@ -229,25 +228,25 @@ function init($) {
             }
             return function (key, keyType) {
                 writo.commandInProgress = true;
-                console.info("running basic command handler: ", key, keyType);
+                //console.info("running basic command handler: ", key, keyType);
                 //First, let's see if we are returning from an insert session
                 if (handlingInsert) {
-                    console.info("Returning from insert");
+                    //console.info("Returning from insert");
                     handlingInsert = false;
                     executeCommand = true;
                 }
                 //If not, parse the command
                 else {
-                    console.info("Not returning from insert");
+                    //console.info("Not returning from insert");
                     //if the user is pressing numeric keys (the repeat count)
                     if (cmdType === "" && keyType === "char" && key.isInt()) {
                         cmdCount *= 10;
                         cmdCount += parseInt(key, 10);
-                        console.info("We pressed a number, cmdCount=", cmdCount);
+                        //console.info("We pressed a number, cmdCount=", cmdCount);
                     }
                     //if this is the first non-numeric key (the command)
                     else if (cmdType === "") {
-                        console.info("We pressed a char");
+                        //console.info("We pressed a char");
                         if (cmdCount === 0) {
                             cmdCount = 1;
                         }
@@ -264,7 +263,7 @@ function init($) {
                     }
                     //This is the second key after the numeric ones (the motion)
                     else {
-                        console.info("doing the motion");
+                        //console.info("doing the motion");
                         cmdMov = key;
                         executeCommand = true;
                     }
@@ -297,7 +296,7 @@ function init($) {
                         else {
                             
                         }
-                        console.groupEnd();
+                        //console.groupEnd();
                     }
                     clearVars();
                 }
