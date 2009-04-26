@@ -217,12 +217,8 @@ function init($) {
             return function (commandID) {
                 var command;
                 console.group("create command", commandID, arguments);
-                command = COMMANDS[commandID];
-                console.debug(command);
                 command = COMMANDS[commandID](arguments); 
-                console.debug(command);
                 command.doCommand();
-                console.info("currentUndoPointer: ", currentUndoPointer)
                 if (currentUndoPointer !== undoStack.length) {
                     undoStack.splice(currentUndoPointer, undoStack.length - currentUndoPointer);
                 }
@@ -358,7 +354,6 @@ function init($) {
 		// ** doUndo ** apparently I lied about the three functions. Here is another one.
         writo.doUndo = function () {
             if (currentUndoPointer > 0) {
-                console.debug("undoing");
                 currentUndoPointer -= 1;
                 undoStack[currentUndoPointer].undoCommand();
             }
@@ -370,7 +365,6 @@ function init($) {
 		// ** It's hard to explain {{{ doRedo }}} without using the concepts "re" and "do"
         writo.doRedo = function () {
             if (currentUndoPointer < undoStack.length) {
-                console.debug("redoing");
                 undoStack[currentUndoPointer].doCommand();
                 currentUndoPointer += 1;
             }
