@@ -135,5 +135,13 @@ var functionalTest = function(keys, writo){
         "Setting heading can be undone"
     );
 
+    fireunit.key(doc, "x");
+    fireunit.key(doc, ".");
+    fireunit.compare(
+        "teru|",
+        $("#DocumentContainer").text(),
+        "Reperform the last command by pressing the '.'"
+    );
+    
     fireunit.testDone();
 }
