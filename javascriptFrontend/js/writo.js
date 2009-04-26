@@ -156,45 +156,16 @@ function init($) {
                 },
 				
 				// ** {{{ DeleteChar }}} **
-				// Command that deletes an element (character or paragraph)
-                // * {{{location: }}} the element to remove
-                DeleteChar : function (location) {
-                    var deletedElement,
-                        contextElement,
-                        command;
-                    // ** {{{getContext }}} ** is currently only used in 
-					// {{{DeleteChar}}}. It provides either the parent or the
-					// previousSibling depending on whether the node has one.
-                    function getContext(node) {
-                        var contextNode = {};
-                        if (node.parent().children().length > 1 || node.is(":eq(0)")) {
-                            contextNode.type = "parent";
-                            contextNode.node = node.parent();
-                        }
-                        else {
-                            this.type = "previousSibling";
-                            this.node = node.prev();
-                        }
-                        return contextNode;
-                    }
-
-                    deletedElement = location;
-                    contextElement = getContext(location);
-                    command = {};
-
-                    command.redo = function () {
-                        deletedElement.remove();
+				// Command that deletes the preceding element
+                deleteChar : function (args) {
+                    var command ={};
+                    command.deletedElement = $("#cursor").prev()[0].innerHTML;
+                    command.doCommand = function () {
+                        $("#cursor").prev().remove();
                     };
-                    if (contextElement.type === "previousSibling") {
-                        command.undo = function () {
-                            contextElement.node.after(deletedElement);
-                        };
-                    }
-                    else {
-                        command.undo = function () {
-                            contextElement.node.prepend(deletedElement);
-                        };
-                    }
+                    command.undoCommand = function () {
+                        $("#cursor").before("<span class='char'>"+this.deletedElement+"</span>");
+                    };
                     return command;
                 }
             };
@@ -286,7 +257,7 @@ function init($) {
                             handlingInsert = true;
                             writo.setEditMode("insert");
                         }
-                        if ("urhlb".has(cmdType)){
+                        if ("urhlbx".has(cmdType)){
                             //these commands do not accept motions
                             executeCommand = true;
                         }
@@ -319,6 +290,9 @@ function init($) {
                         }
                         else if (cmdType == "l"){
                             performCommand("moveCursor", "next", ".char");
+                        }
+                        else if (cmdType == "x"){
+                            performCommand("deleteChar");
                         }
                         else {
                             
