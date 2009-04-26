@@ -170,7 +170,25 @@ function init($) {
                 },
                 
                 rePerform : function (args) {
-                    return undoStack[undoStack.length -1];
+                    command = {};
+                    command.amount = args[1];
+                    command.origArgs = undoStack[undoStack.length -1].args;
+                    command.privateUndoStack = [];
+                    command.command = COMMANDS[command.origArgs[0]];
+                    command.doCommand = function(){
+                        for (var i=0; i<this.amount;i++){
+                            if (this.privateUndoStack[i] === undefined){
+                                this.privateUndoStack.push(this.command(this.origArgs));
+                            }
+                            this.privateUndoStack[i].doCommand();
+                        }
+                    };
+                    command.undoCommand = function(){
+                        for (var i=this.amount-1; i>=0;i--){
+                            this.privateUndoStack[i].undoCommand();
+                        }
+                    };
+                    return command;
                 }
             };
 			
@@ -186,6 +204,7 @@ function init($) {
                 var command;
                 command = COMMANDS[commandID](arguments); 
                 command.commandID = commandID;
+                command.args = arguments;
                 command.doCommand();
                 console.warn(command.toSource());
                 if (currentUndoPointer !== undoStack.length) {
@@ -215,19 +234,10 @@ function init($) {
 		// This macro-scripting-insert-mode stuff is implemented as a state-machine.
         basicCommandHandler = function () {
             var handlingInsert = false, //true when we return from insert mode
-                executeCommand = false, //true when command building is done
-
-                                  //A command consists of three parts:
-                cmdCount    = 0,  //how many times it's executed
-                cmdType    = "",  //The command ID
-                cmdMov = "";      //The range where the command will be applied
+                cmdType    = "";        //The identifier of the command
             function clearVars(){
                 handlingInsert = false;
-                executeCommand = false;
-
-                cmdCount    = 0;
                 cmdType    = "";
-                cmdMov = "";
                 writo.commandInProgress = false;
             }
             return function (key, keyType) {
@@ -242,33 +252,14 @@ function init($) {
                 //If not, parse the command
                 else {
                     //console.info("Not returning from insert");
-                    //if the user is pressing numeric keys (the repeat count)
-                    if (cmdType === "" && keyType === "char" && key.isInt()) {
-                        cmdCount *= 10;
-                        cmdCount += parseInt(key, 10);
-                        //console.info("We pressed a number, cmdCount=", cmdCount);
-                    }
-                    //if this is the first non-numeric key (the command)
-                    else if (cmdType === "") {
-                        //console.info("We pressed a char");
-                        if (cmdCount === 0) {
-                            cmdCount = 1;
-                        }
+                    if (cmdType === "") {
+                        cmdCount = 1;
                         cmdType = key;
                         console.info("It's the '"+cmdType+"' key");
                         if (cmdType === 'i') {
                             handlingInsert = true;
                             writo.setEditMode("insert");
                         }
-                        if ("urhlbx.".has(cmdType)){
-                            //these commands do not accept motions
-                            executeCommand = true;
-                        }
-                    }
-                    //This is the second key after the numeric ones (the motion)
-                    else {
-                        //console.info("doing the motion");
-                        cmdMov = key;
                         executeCommand = true;
                     }
                 }
@@ -297,12 +288,10 @@ function init($) {
                         else if (cmdType == "x"){
                             performCommand("deleteChar");
                         }
-                        else if (cmdType == "."){
-                            performCommand("rePerform");
+                        else if (cmdType.isInt()){
+                            performCommand("rePerform", cmdType);
                         }
-                        else {
-                            
-                        }
+                        
                         //console.groupEnd();
                     }
                     clearVars();
