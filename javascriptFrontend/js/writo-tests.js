@@ -108,6 +108,20 @@ var functionalTest = function(keys, writo){
         $("#DocumentContainer").text(),
         "Walking past the end of the text fails gracefully"
     );
+    fireunit.key(doc, "x");
+    fireunit.compare(
+        "terug|",
+        $("#DocumentContainer").text(),
+        "Characters can be deleted"
+    );
+
+    fireunit.key(doc, "u");
+    fireunit.compare(
+        "terug |",
+        $("#DocumentContainer").text(),
+        "Delete can be undone"
+    );
+
     
     fireunit.key(doc, "b");
     fireunit.ok(
