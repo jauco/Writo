@@ -84,14 +84,13 @@ function init($) {
                 // * {{{commandID:}}} can be used to later identify the command.
                 // * {{{character:}}} is the character to append
                 insChar: function (args) {
-                    var command = {"continueUndo": args[2]},
-                        character;
-                    character = args[1];
-                    command.name = "insChar: "+character;
+                    var command = {};
+                    command.character = args[1];
+                    command.name = "insChar: "+command.character;
                     command.doCommand = function () {
                         $("#cursor").before(
                             "<span class='char'>" + 
-                            character + 
+                            this.character + 
                             "</span>"
                         );
                     };
@@ -103,20 +102,17 @@ function init($) {
                 // ** {{{setStyle }}}**
                 // Adds a class to the current paragraph div.
                 addClass: function (args) {
-                    var command = {"continueUndo": args[2]},
-                        className;
-                    className = args[1];
-                    command.name = "addclass: "+className;
-                    var targetParagraph;
+                    var command = {};
+                    command.className = args[1];
+                    command.name = "addclass: "+command.className;
                     command.doCommand = function () {
-                        targetParagraph = $(".active");
-                        targetParagraph.addClass(className);
+                        $(".active").addClass(this.className);
                     };
                     command.undoCommand = function () {
-                        targetParagraph.removeClass(className);
+                        $(".active").removeClass(this.className);
                     };
                     return command;
-                },
+                },  
                 // ** {{{ moveCursor }}} **
 				// Returns a function that will move the cursor a specific step in a 
                   // specific direction. Or just an empty dummy if the target location 
@@ -125,12 +121,9 @@ function init($) {
                   // * {{{moveFunc: }}} a classname or other jQuery expression to determine how far the cursor moves
                   // * {{{direction: }}} "prev" or "next"
                 moveCursor : function (args) {
-                    var command = {
-                            "continueUndo" : true, 
-                            "commandID": args[0]
-                        },
-                        direction = args[1],
-                        moveFunc = args[2];
+                    var command = {};
+                    command.direction = args[1];
+                    command.moveFunc = args[2];
                     
                     function moveCursor(newLocation, direction) {
                         if (! newLocation.closest("div.paragraph").hasClass("active")) {
@@ -147,12 +140,12 @@ function init($) {
                     }
 
                     //if the newLocation exists
-                    if ($("#cursor")[direction](moveFunc).length > 0) {
+                    if ($("#cursor")[command.direction](command.moveFunc).length > 0) {
                         command.doCommand = function () {
-                            moveCursor($("#cursor")[direction](moveFunc), direction);
+                            moveCursor($("#cursor")[this.direction](this.moveFunc), this.direction);
                         };
                         command.undoCommand = function () {
-                            moveCursor($("#cursor")[direction](moveFunc), direction);
+                            moveCursor($("#cursor")[this.direction](this.moveFunc), this.direction);
                         };
                     }
                     else {
@@ -218,6 +211,7 @@ function init($) {
                 var command;
                 console.group("create command", commandID, arguments);
                 command = COMMANDS[commandID](arguments); 
+                command.commandID = commandID;
                 command.doCommand();
                 if (currentUndoPointer !== undoStack.length) {
                     undoStack.splice(currentUndoPointer, undoStack.length - currentUndoPointer);
