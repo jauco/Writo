@@ -86,7 +86,7 @@ function init($) {
                 insChar: function (args) {
                     var command = {};
                     command.character = args[1];
-                    command.name = "insChar: "+command.character;
+                    command.name = "insChar: " + command.character;
                     command.doCommand = function () {
                         $("#cursor").before(
                             "<span class='char'>" + 
@@ -104,7 +104,7 @@ function init($) {
                 addClass: function (args) {
                     var command = {};
                     command.className = args[1];
-                    command.name = "addclass: "+command.className;
+                    command.name = "addclass: " + command.className;
                     command.doCommand = function () {
                         $(".active").addClass(this.className);
                     };
@@ -158,33 +158,33 @@ function init($) {
 				// ** {{{ DeleteChar }}} **
 				// Command that deletes the preceding element
                 deleteChar : function (args) {
-                    var command ={};
+                    var command = {};
                     command.deletedElement = $("#cursor").prev()[0].innerHTML;
                     command.doCommand = function () {
                         $("#cursor").prev().remove();
                     };
                     command.undoCommand = function () {
-                        $("#cursor").before("<span class='char'>"+this.deletedElement+"</span>");
+                        $("#cursor").before("<span class='char'>" + this.deletedElement + "</span>");
                     };
                     return command;
                 },
                 
                 rePerform : function (args) {
-                    command = {};
+                    var command = {};
                     command.amount = args[1];
-                    command.origArgs = undoStack[undoStack.length -1].args;
+                    command.origArgs = undoStack[undoStack.length - 1].args;
                     command.privateUndoStack = [];
                     command.command = COMMANDS[command.origArgs[0]];
-                    command.doCommand = function(){
-                        for (var i=0; i<this.amount;i++){
-                            if (this.privateUndoStack[i] === undefined){
+                    command.doCommand = function () {
+                        for (var i = 0; i < this.amount; i += 1) {
+                            if (this.privateUndoStack[i] === undefined) {
                                 this.privateUndoStack.push(this.command(this.origArgs));
                             }
                             this.privateUndoStack[i].doCommand();
                         }
                     };
-                    command.undoCommand = function(){
-                        for (var i=this.amount-1; i>=0;i--){
+                    command.undoCommand = function () {
+                        for (var i = this.amount - 1; i >= 0; i -= 1) {
                             this.privateUndoStack[i].undoCommand();
                         }
                     };
@@ -235,7 +235,7 @@ function init($) {
         basicCommandHandler = function () {
             var handlingInsert = false, //true when we return from insert mode
                 cmdType    = "";        //The identifier of the command
-            function clearVars(){
+            function clearVars() {
                 handlingInsert = false;
                 cmdType    = "";
                 writo.commandInProgress = false;
@@ -247,55 +247,48 @@ function init($) {
                 if (handlingInsert) {
                     //console.info("Returning from insert");
                     handlingInsert = false;
-                    executeCommand = true;
                 }
                 //If not, parse the command
                 else {
                     //console.info("Not returning from insert");
                     if (cmdType === "") {
-                        cmdCount = 1;
                         cmdType = key;
-                        console.info("It's the '"+cmdType+"' key");
+                        console.info("It's the '" + cmdType + "' key");
                         if (cmdType === 'i') {
                             handlingInsert = true;
                             writo.setEditMode("insert");
                         }
-                        executeCommand = true;
                     }
                 }
                 //If a complete command has been specified, then execute it.
-                if (executeCommand === true) {
-                    for (var i=0; i< cmdCount; i++){
-                        console.log("complete command");
-                        if (cmdType == 'u'){
-                            writo.doUndo();
-                        }
-                        else if (cmdType == 'r'){
-                            writo.doRedo();
-                        }
-                        else if (cmdType == "i"){
-                            //ignore for now. Only useful when command multiplication is reenabled
-                        }
-                        else if (cmdType == "h"){
-                            performCommand("moveCursor", "prev", ".char");
-                        }
-                        else if (cmdType == "b"){
-                            performCommand("addClass", "heading");
-                        }
-                        else if (cmdType == "l"){
-                            performCommand("moveCursor", "next", ".char");
-                        }
-                        else if (cmdType == "x"){
-                            performCommand("deleteChar");
-                        }
-                        else if (cmdType.isInt()){
-                            performCommand("rePerform", cmdType);
-                        }
-                        
-                        //console.groupEnd();
-                    }
-                    clearVars();
+                console.log("complete command");
+                if (cmdType === 'u') {
+                    writo.doUndo();
                 }
+                else if (cmdType === 'r') {
+                    writo.doRedo();
+                }
+                else if (cmdType === "i") {
+                    //ignore for now. Only useful when command multiplication is reenabled
+                }
+                else if (cmdType === "h") {
+                    performCommand("moveCursor", "prev", ".char");
+                }
+                else if (cmdType === "b") {
+                    performCommand("addClass", "heading");
+                }
+                else if (cmdType === "l") {
+                    performCommand("moveCursor", "next", ".char");
+                }
+                else if (cmdType === "x") {
+                    performCommand("deleteChar");
+                }
+                else if (cmdType.isInt()) {
+                    performCommand("rePerform", cmdType);
+                }
+                
+                //console.groupEnd();
+                clearVars();
             };
         }();
 
@@ -321,7 +314,7 @@ function init($) {
                 undoStack[currentUndoPointer].undoCommand();
             }
             else {
-                console.warn("There's nothing to undo")
+                console.warn("There's nothing to undo");
             }
         };
         
@@ -332,7 +325,7 @@ function init($) {
                 currentUndoPointer += 1;
             }
             else {
-                console.warn("There's nothing to redo")
+                console.warn("There's nothing to redo");
             }
         };
         
