@@ -140,14 +140,14 @@ var functionalTest = function(keys, writo){
     fireunit.compare(
         "teru|",
         $("#DocumentContainer").text(),
-        "Reperform the last command by pressing the '.'"
+        "Reperform the last command by pressing the 1"
     );
     
     fireunit.key(doc, "x");
     fireunit.key(doc, "2");
     fireunit.key(doc, "u");
     fireunit.compare(
-        "teru|",
+        "ter|",
         $("#DocumentContainer").text(),
         "Multiplied commands appear as one command on the undo stack"
     );
