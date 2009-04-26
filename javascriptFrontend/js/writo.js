@@ -167,6 +167,10 @@ function init($) {
                         $("#cursor").before("<span class='char'>"+this.deletedElement+"</span>");
                     };
                     return command;
+                },
+                
+                rePerform : function (args) {
+                    return undoStack[undoStack.length -1];
                 }
             };
 			
@@ -256,7 +260,7 @@ function init($) {
                             handlingInsert = true;
                             writo.setEditMode("insert");
                         }
-                        if ("urhlbx".has(cmdType)){
+                        if ("urhlbx.".has(cmdType)){
                             //these commands do not accept motions
                             executeCommand = true;
                         }
@@ -292,6 +296,9 @@ function init($) {
                         }
                         else if (cmdType == "x"){
                             performCommand("deleteChar");
+                        }
+                        else if (cmdType == "."){
+                            performCommand("rePerform");
                         }
                         else {
                             
