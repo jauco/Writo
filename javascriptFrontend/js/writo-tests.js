@@ -83,8 +83,8 @@ var functionalTest = function(keys, writo){
         "Undoing, then adding new commands, then undoing again"
     );
     
-    fireunit.key(doc, "2");
     fireunit.key(doc, "h");
+    fireunit.key(doc, "1");
     fireunit.compare(
         "ter|ug",
         $("#DocumentContainer").text(),
@@ -136,15 +136,15 @@ var functionalTest = function(keys, writo){
     );
 
     fireunit.key(doc, "x");
-    fireunit.key(doc, ".");
+    fireunit.key(doc, "1");
     fireunit.compare(
         "teru|",
         $("#DocumentContainer").text(),
         "Reperform the last command by pressing the '.'"
     );
     
-    fireunit.key(doc, "2");
     fireunit.key(doc, "x");
+    fireunit.key(doc, "2");
     fireunit.key(doc, "u");
     fireunit.compare(
         "teru|",
