@@ -27,7 +27,7 @@ String.prototype.has = function (searchChar) {
 // ** {{{ String.isInt() }}} **
 // Determine whether you can safely convert the String to an int.
 String.prototype.isInt = function () {
-    return parseInt(this, 10) + "" === this;
+    return parseInt(this, 10) + "" === this[0];
 };
 
 // == Declarations ==
@@ -310,29 +310,31 @@ function init($) {
                 }
                 //If a complete command has been specified, then execute it.
                 if (executeCommand === true) {
-                    console.log("complete command");
-                    if (cmdType == 'u'){
-                        writo.doUndo();
+                    for (var i=0; i< cmdCount; i++){
+                        console.log("complete command");
+                        if (cmdType == 'u'){
+                            writo.doUndo();
+                        }
+                        else if (cmdType == 'r'){
+                            writo.doRedo();
+                        }
+                        else if (cmdType == "i"){
+                            //ignore for now. Only useful when command multiplication is reenabled
+                        }
+                        else if (cmdType == "h"){
+                            performCommand("moveCursor", "prev", ".char");
+                        }
+                        else if (cmdType == "b"){
+                            performCommand("addClass", "heading");
+                        }
+                        else if (cmdType == "l"){
+                            performCommand("moveCursor", "next", ".char");
+                        }
+                        else {
+                            
+                        }
+                        console.groupEnd();
                     }
-                    else if (cmdType == 'r'){
-                        writo.doRedo();
-                    }
-                    else if (cmdType == "i"){
-                        //ignore for now. Only useful when command multiplication is reenabled
-                    }
-                    else if (cmdType == "h"){
-                        performCommand("moveCursor", "prev", ".char");
-                    }
-                    else if (cmdType == "b"){
-                        performCommand("addClass", "heading");
-                    }
-                    else if (cmdType == "l"){
-                        performCommand("moveCursor", "next", ".char");
-                    }
-                    else {
-                        
-                    }
-                    console.groupEnd();
                     clearVars();
                 }
             };
