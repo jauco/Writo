@@ -60,6 +60,11 @@ function init($) {
             basicCommandHandler,
             insertCommandHandler;
 
+        var DropUndoStackFromThisPointOnwards = function(){
+            if (currentUndoPointer !== undoStack.length) {
+                undoStack.splice(currentUndoPointer, undoStack.length - currentUndoPointer);
+            }
+        }
         writo.commandInProgress = false;
 		// == Command objects ==
 		// Writo is created in a pluggable way, all commands that the user can execute are
@@ -125,7 +130,7 @@ function init($) {
                     command.direction = args[1];
                     command.moveFunc = args[2];
                     
-                    function moveCursor(newLocation, direction) {
+                    command.moveCursor= function(newLocation, direction) {
                         if (! newLocation.closest("div.paragraph").hasClass("active")) {
                             $("#cursor").closest("div.paragraph").removeClass("active");
                             newLocation.closest("div.paragraph").addClass("active");
@@ -142,10 +147,17 @@ function init($) {
                     //if the newLocation exists
                     if ($("#cursor")[command.direction](command.moveFunc).length > 0) {
                         command.doCommand = function () {
-                            moveCursor($("#cursor")[this.direction](this.moveFunc), this.direction);
+                            this.moveCursor($("#cursor")[this.direction](this.moveFunc), this.direction);
                         };
                         command.undoCommand = function () {
-                            moveCursor($("#cursor")[this.direction](this.moveFunc), this.direction);
+                            var undoDirection;
+                            if (this.direction=="prev"){
+                                undoDirection = "next";
+                            }
+                            else {
+                                undoDirection = "prev";
+                            }
+                            this.moveCursor($("#cursor")[undoDirection](this.moveFunc), undoDirection);
                         };
                     }
                     else {
@@ -172,7 +184,7 @@ function init($) {
                 rePerform : function (args) {
                     var command = {};
                     command.amount = args[1];
-                    command.origArgs = undoStack[undoStack.length - 1].args;
+                    command.origArgs = undoStack[undoStack.length - 1].args.slice();
                     command.privateUndoStack = [];
                     command.command = COMMANDS[command.origArgs[0]];
                     command.doCommand = function () {
@@ -202,14 +214,19 @@ function init($) {
 			
             return function (commandID) {
                 var command;
-                command = COMMANDS[commandID](arguments); 
-                command.commandID = commandID;
-                command.args = arguments;
-                command.doCommand();
-                console.warn(command.toSource());
-                if (currentUndoPointer !== undoStack.length) {
-                    undoStack.splice(currentUndoPointer, undoStack.length - currentUndoPointer);
+                var argArray = [];
+                var i = 0;
+                var arg = arguments[i];
+                while (arg !== undefined){
+                    argArray[i] = arg;
+                    i++;
+                    arg = arguments[i];
                 }
+                command = COMMANDS[commandID](argArray); 
+                command.commandID = commandID;
+                command.args = argArray;
+                command.doCommand();
+                DropUndoStackFromThisPointOnwards()
                 undoStack.push(command);
                 currentUndoPointer = undoStack.length;
                 return command;
@@ -253,7 +270,7 @@ function init($) {
                     //console.info("Not returning from insert");
                     if (cmdType === "") {
                         cmdType = key;
-                        console.info("It's the '" + cmdType + "' key");
+                        //console.info("It's the '" + cmdType + "' key");
                         if (cmdType === 'i') {
                             handlingInsert = true;
                             writo.setEditMode("insert");
@@ -261,7 +278,7 @@ function init($) {
                     }
                 }
                 //If a complete command has been specified, then execute it.
-                console.log("complete command");
+                //console.log("complete command");
                 if (cmdType === 'u') {
                     writo.doUndo();
                 }
@@ -349,11 +366,11 @@ function init($) {
             }
             $("body").addClass(newMode);
             if (newMode === "command") {
-                console.info("Going to command mode");
+                //console.info("Going to command mode");
                 writo.commandHandler = basicCommandHandler;
             }
             else {
-                console.info("Going to insert mode");
+                //console.info("Going to insert mode");
                 writo.commandHandler = insertCommandHandler;
             }
         };
@@ -364,7 +381,7 @@ function init($) {
 		// //The code that javascript returns for a key differs between keypress handlers and keydown handlers. One only sets the keyCode,
 		// the other only the charCode. Also, different browsers handle things lsightly differently.//
         writo.keyHandler = function (evt) {
-            console.group("Handling: ", evt.keyCode, evt.charCode, evt);
+            //console.group("Handling: ", evt.keyCode, evt.charCode, evt);
             var keyType, 
                 keyValue,
                 functionKeyMapping = {
@@ -414,8 +431,33 @@ function init($) {
                 }
             }
             writo.commandHandler(keyValue, keyType, undoStack);
-            console.groupEnd();
+            //console.groupEnd();
         };
+        
+        writo.cleanDocument = function(){
+            DropUndoStackFromThisPointOnwards();
+            $("#DocumentContainer")[0].innerHTML = "<div class='active paragraph'><span id='cursor'>|</span></div>";
+        }
+        
+        writo.giveName = function(){}
+        
+        writo.load = function(cmdArray){
+            undoStack = eval("("+cmdArray+")");
+            for (var i=0; i< undoStack.length; i++){
+                console.log(i,undoStack[i]);
+                undoStack[i].doCommand();
+            }
+        }
+        
+        writo.writeCommands = function(){
+            $("#DocumentContainer")[0].innerHTML = undoStack.toSource();
+        }
+        
+        writo.reload = function(){
+            var str = undoStack.toSource();
+            this.load(str);
+        }
+
         return writo;
     }();
 	// == The init code ==
@@ -423,6 +465,6 @@ function init($) {
 	// The following lines will set up the writohandler.
     $(document).bind("keypress.WritoHandler", writoEditor.keyHandler);
     writoEditor.setEditMode("command");
-    $("#DocumentContainer").append($("<div class='active paragraph'><span id='cursor'>|</span></div>"));
+    writoEditor.cleanDocument();
     return writoEditor;
 }

@@ -3,6 +3,9 @@
 // # have the desired effect
 // # will always have this effect even ten releases later.
 var functionalTest = function(keys, writo){
+
+   
+    
     var doc = document.getElementsByTagName("body")[0];
 
     fireunit.compare(
@@ -150,6 +153,37 @@ var functionalTest = function(keys, writo){
         "ter|",
         $("#DocumentContainer").text(),
         "Multiplied commands appear as one command on the undo stack"
+    );
+
+    
+    fireunit.key(doc, "h");
+    fireunit.key(doc, "i");
+    fireunit.key(doc, "x");
+    fireunit.key(doc, keys.esc);
+    fireunit.key(doc, "l");
+    fireunit.key(doc, "u");
+    fireunit.key(doc, "u");
+    fireunit.key(doc, "u");
+    
+    fireunit.compare(
+        "ter|",
+        $("#DocumentContainer").text(),
+        "Test if undo works when navigating"
+    );
+
+    writo.giveName("foo");
+    writo.cleanDocument();
+    fireunit.compare(
+        "|",
+        $("#DocumentContainer").text(),
+        "CleanDocument should clean the content"
+    );
+    
+    writo.reload();
+    fireunit.compare(
+        "ter|",
+        $("#DocumentContainer").text(),
+        "Loading the document from string should result in the same document"
     );
     
     fireunit.testDone();
