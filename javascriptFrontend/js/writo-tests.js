@@ -4,8 +4,6 @@
 // # will always have this effect even ten releases later.
 var functionalTest = function(keys, writo){
 
-   
-    
     var doc = document.getElementsByTagName("body")[0];
 
     fireunit.compare(
@@ -14,19 +12,10 @@ var functionalTest = function(keys, writo){
         "Test if document is empty, except for cursor"
     );
 
-    fireunit.key(doc, "u");//insert mode
-    fireunit.compare(
-        false, 
-        writo.commandInProgress,
-        "Pressing undo when nothing is done yet, should gracefully fail, by doing nothing"
-    );
-    
+    //"Pressing undo when nothing is done yet, should gracefully fail, by doing nothing"
+    fireunit.key(doc, "u");
+    //"Pressing redo when nothing is done yet, should gracefully fail, by doing nothing"
     fireunit.key(doc, "r");//insert mode
-    fireunit.compare(
-        false, 
-        writo.commandInProgress,
-        "Pressing redo when nothing is done yet, should gracefully fail, by doing nothing"
-    );
     
     fireunit.key(doc, "i");//insert mode
     fireunit.ok(

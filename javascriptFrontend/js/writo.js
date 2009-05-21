@@ -35,7 +35,7 @@ String.prototype.isInt = function () {
 
 // ** Set everything up **\\
 // You can call this {{{init}}} function to get a {{{writo}}} application object.
-function init($) {
+function nl_jauco_writo($) {
 
     // ** The editor class/module **\\
 	// The actually interesting stuff is defined in this function.
@@ -65,7 +65,7 @@ function init($) {
                 undoStack.splice(currentUndoPointer, undoStack.length - currentUndoPointer);
             }
         }
-        writo.commandInProgress = false;
+
 		// == Command objects ==
 		// Writo is created in a pluggable way, all commands that the user can execute are
 		// written as seperate functions that are then passed around and will
@@ -78,20 +78,16 @@ function init($) {
 		// If you want to know how they are used, you can scroll to the part
 		// labeled "**Returning the command objects**"
 		// Each function in COMMANDS will return an object with a doCommand and undoCommand function.
-        //
-		// //I'm defining the functions to accept an args array parameter instead of actually passing the values. This
-		// allows me to construct the parameter sequence piece by piece and then pass it to the command. This saves me some
-		// {{{if else }}} constructs at the cost of having less explicit functions//
         performCommand = function () { 
             var COMMANDS = {
 				// ** {{{insChar }}}**
                 // Appends a character to the current element.
                 // * {{{commandID:}}} can be used to later identify the command.
                 // * {{{character:}}} is the character to append
-                insChar: function (args) {
+                insChar: function ([commandID, character]) {
                     var command = {};
-                    command.character = args[1];
-                    command.name = "insChar: " + command.character;
+                    command.name = commandID + character;
+                    command.character = character;
                     command.doCommand = function () {
                         $("#cursor").before(
                             "<span class='char'>" + 
@@ -106,9 +102,9 @@ function init($) {
                 },
                 // ** {{{setStyle }}}**
                 // Adds a class to the current paragraph div.
-                addClass: function (args) {
+                addClass: function ([commandID, className]) {
                     var command = {};
-                    command.className = args[1];
+                    command.className = className;
                     command.name = "addclass: " + command.className;
                     command.doCommand = function () {
                         $(".active").addClass(this.className);
@@ -125,10 +121,10 @@ function init($) {
                   // * {{{commandID: }}} can be used to later identify the command.
                   // * {{{moveFunc: }}} a classname or other jQuery expression to determine how far the cursor moves
                   // * {{{direction: }}} "prev" or "next"
-                moveCursor : function (args) {
+                moveCursor : function ([commandID, direction, moveFunc]) {
                     var command = {};
-                    command.direction = args[1];
-                    command.moveFunc = args[2];
+                    command.direction = direction;
+                    command.moveFunc = moveFunc;
                     
                     command.moveCursor= function(newLocation, direction) {
                         if (! newLocation.closest("div.paragraph").hasClass("active")) {
@@ -169,7 +165,7 @@ function init($) {
 				
 				// ** {{{ DeleteChar }}} **
 				// Command that deletes the preceding element
-                deleteChar : function (args) {
+                deleteChar : function ([commandId]) {
                     var command = {};
                     command.deletedElement = $("#cursor").prev()[0].innerHTML;
                     command.doCommand = function () {
@@ -181,9 +177,9 @@ function init($) {
                     return command;
                 },
                 
-                rePerform : function (args) {
+                rePerform : function ([commandID, amount]) {
                     var command = {};
-                    command.amount = args[1];
+                    command.amount = amount;
                     command.origArgs = undoStack[undoStack.length - 1].args.slice();
                     command.privateUndoStack = [];
                     command.command = COMMANDS[command.origArgs[0]];
@@ -211,17 +207,9 @@ function init($) {
 			// Now that we've declared all possible commands, the following 
 			// statement actually returns one. It also makes sure that the 
 			// command is placed on the undo stack.
-			
             return function (commandID) {
                 var command;
-                var argArray = [];
-                var i = 0;
-                var arg = arguments[i];
-                while (arg !== undefined){
-                    argArray[i] = arg;
-                    i++;
-                    arg = arguments[i];
-                }
+                var argArray = Array.slice(arguments);
                 command = COMMANDS[commandID](argArray); 
                 command.commandID = commandID;
                 command.args = argArray;
@@ -244,7 +232,7 @@ function init($) {
 		// You can do basic macro scripting by typing a number before the command. For example:
 		// {{{j}}} will move the cursor up one line, {{{2j}}} will move the cursor up two lines.\\
 		// The {{{insertCommandHandler}}} defined later is actually a kind of specific command. So it can
-		// also be multiplied. Pressing {{{3iw<esc>}}} will result in {{{www}}} on the screen.
+		// also be multiplied. Pressing {{{iw<esc>3}}} will result in {{{www}}} on the screen.
 		// 
 		// //WOW! only four keystrokes to put www on the screen. This editor is super powerfull!//
 		//
@@ -255,30 +243,19 @@ function init($) {
             function clearVars() {
                 handlingInsert = false;
                 cmdType    = "";
-                writo.commandInProgress = false;
             }
             return function (key, keyType) {
-                writo.commandInProgress = true;
-                //console.info("running basic command handler: ", key, keyType);
-                //First, let's see if we are returning from an insert session
                 if (handlingInsert) {
-                    //console.info("Returning from insert");
                     handlingInsert = false;
                 }
-                //If not, parse the command
                 else {
-                    //console.info("Not returning from insert");
-                    if (cmdType === "") {
-                        cmdType = key;
-                        //console.info("It's the '" + cmdType + "' key");
-                        if (cmdType === 'i') {
-                            handlingInsert = true;
-                            writo.setEditMode("insert");
-                        }
+                    cmdType = key;
+                    if (cmdType === 'i') {
+                        handlingInsert = true;
+                        writo.setEditMode("insert");
                     }
                 }
                 //If a complete command has been specified, then execute it.
-                //console.log("complete command");
                 if (cmdType === 'u') {
                     writo.doUndo();
                 }
@@ -303,8 +280,6 @@ function init($) {
                 else if (cmdType.isInt()) {
                     performCommand("rePerform", cmdType);
                 }
-                
-                //console.groupEnd();
                 clearVars();
             };
         }();
@@ -324,7 +299,7 @@ function init($) {
             }
         };
 
-		// ** doUndo ** apparently I lied about the three functions. Here is another one.
+		// ** doUndo ** the handler for undoing
         writo.doUndo = function () {
             if (currentUndoPointer > 0) {
                 currentUndoPointer -= 1;
@@ -335,7 +310,7 @@ function init($) {
             }
         };
         
-		// ** It's hard to explain {{{ doRedo }}} without using the concepts "re" and "do"
+		// ** doUndo ** the handler for redoing
         writo.doRedo = function () {
             if (currentUndoPointer < undoStack.length) {
                 undoStack[currentUndoPointer].doCommand();
@@ -359,19 +334,19 @@ function init($) {
 		
 		// **{{{setEditMode}}}** adds the body class and initializes the correct command handlers.
         writo.setEditMode = function (newMode) {
-            for (var i = 0; i < modes.length; i += 1) {
-                if ($("body").hasClass(modes[i])) {
-                    $("body").removeClass(modes[i]);
+            if (modes.indexOf(newMode)>-1){
+                for (var i = 0; i < modes.length; i += 1) {
+                    if ($("body").hasClass(modes[i])) {
+                        $("body").removeClass(modes[i]);
+                    }
                 }
-            }
-            $("body").addClass(newMode);
-            if (newMode === "command") {
-                //console.info("Going to command mode");
-                writo.commandHandler = basicCommandHandler;
-            }
-            else {
-                //console.info("Going to insert mode");
-                writo.commandHandler = insertCommandHandler;
+                $("body").addClass(newMode);
+                if (newMode === "command") {
+                    writo.commandHandler = basicCommandHandler;
+                }
+                else {
+                    writo.commandHandler = insertCommandHandler;
+                }
             }
         };
 
@@ -381,10 +356,26 @@ function init($) {
 		// //The code that javascript returns for a key differs between keypress handlers and keydown handlers. One only sets the keyCode,
 		// the other only the charCode. Also, different browsers handle things lsightly differently.//
         writo.keyHandler = function (evt) {
-            //console.group("Handling: ", evt.keyCode, evt.charCode, evt);
-            var keyType, 
-                keyValue,
-                functionKeyMapping = {
+            var keyName,
+                command;
+            
+            if (arguments.callee.activeCommand === undefined){ //arguments.callee.X works kinda like static vars in VB
+                arguments.callee.activeCommand = null;
+            }
+            command = arguments.callee.activeCommand;
+            keyName = getKeyInfo(evt);
+            if (command === null){
+                command = writo.getCommand(keyName);
+            }
+            else if (command.canHandle(keyName)){
+                command = command.handle(keyName);
+            }
+            else {
+                throw new Error('FIXME: Reset everything');
+            }
+            
+            function getKeyInfo(evt){
+                var functionKeyMapping = {
                     8:   "backspace",
                     20:  "capslock",
                     46:  "del",
@@ -417,21 +408,18 @@ function init($) {
                     32:  "space", 
                     9:   "tab"
                 };
-            if (evt.keyCode === undefined || evt.keyCode === 0) {
-                keyType = "char";
-                keyValue = String.fromCharCode(evt.charCode);
-            }
-            else {
-                keyType = "functionKey";
-                if (functionKeyMapping.hasOwnProperty(evt.keyCode)) {
-                    keyValue = functionKeyMapping[evt.keyCode];
+                if (evt.keyCode === undefined || evt.keyCode === 0) {
+                    return String.fromCharCode(evt.charCode);
                 }
                 else {
-                    keyValue = null;
+                    if (functionKeyMapping.hasOwnProperty(evt.keyCode)) {
+                        return functionKeyMapping[evt.keyCode];
+                    }
+                    else {
+                        throw ( new Error('Keymapping does not exist!'));
+                    }
                 }
             }
-            writo.commandHandler(keyValue, keyType, undoStack);
-            //console.groupEnd();
         };
         
         writo.cleanDocument = function(){
@@ -443,10 +431,7 @@ function init($) {
         
         writo.load = function(cmdArray){
             undoStack = eval("("+cmdArray+")");
-            for (var i=0; i< undoStack.length; i++){
-                console.log(i,undoStack[i]);
-                undoStack[i].doCommand();
-            }
+            undoStack.forEach(function(cmd){cmd.doCommand()})
         }
         
         writo.writeCommands = function(){
