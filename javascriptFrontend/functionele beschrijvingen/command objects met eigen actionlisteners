@@ -1,0 +1,126 @@
+nieuwe implementatie van commando's
+===================================
+
+Probleem
+--------
+Het is op dit moment lastig om gecombineerde commando's te maken. Als je 
+bijvoorbeeld op '2' en dan op 'd' drukt wil je dat het d commando twee keer 
+wordt uitgevoerd. Idealiter is de implementatie van het nummer modifier 
+onafhankelijk van het d commando.
+
+Trigger
+-------
+We hebben een redelijke implementatie van het multiplier commando, maar een 
+'movement' commando, die een actie uit laat voeren op een specifieke range
+is nog vrij lastig. Ook werkt de multiplier niet voor het 'i' commando. Insert
+is op dit moment namelijk ongelijk aan de andere commando's omdat het het 
+toetsenbord remapt.
+
+Oplossing
+---------
+We maken nog maar 1 type commando dat alle acties moet kunnen uitvoeren, dus 
+zowel insert als command. En ook de modifiers. Er is geen insert vs. command 
+mode meer. In plaats daarvan kan een command om de toetsenbord invoer vragen. 
+ * Zo kan insert zodra het is opgestart de toetsen op het scherm toveren door 
+   ze door te geven aan insertCommand, en na afloop zichzelf als 1 commando 
+   teruggeven. 
+ * Een multiplier wacht ook op commando's en voert ze vervolgens nog x maal uit.
+ * Een range commando voert het volgende commando uit net zolang tot het einde
+   van de range is bereikt.
+
+Een commando dat om de toetsenbord invoer vraagt genereert dus nieuwe 
+commando's op basis van die toetsenbord invoer die commando's decoraten elkaar. 
+Pas als het hele zootje klaar is wordt de uitvoer ook echt bewerkstelligt.
+
+Use cases
+---------
+
+ 1. De input actie moet 99x uitgevoerd worden.
+ 2. De zin waar de cursor middenin staat moet verwijderd worden
+ 3. De huidig paragraaf wordt
+
+Methode
+-------
+
+objecten die status persisteren:
+ * De property Writo.activeCommando bevat de buitenste decorator.
+
+#De gebruiker drukt een toets in:
+if (Writo.activeCommand == null){
+    cmd = getCommandFor(key)
+}
+else {
+    if (key == <esc>){
+        fizzle();
+    }
+    cmd = Writo.activeCommand.keyHandler.handle(key);
+    if Writo.activeCommand.keyHandler.canHandle(cmd.type){ //FIXME: cmd.type
+        
+        if (cmd.handle != undefined){
+            Writo.activeCommand = cmd;
+            cmd = null;
+        }
+    }
+}
+
+    if (cmd.keyHandler != undefined){
+        Writo.activeCommand = cmd;
+        cmd = null;
+    }
+
+
+if (cmd != null){
+    if (cmd.isExecutes == undefined){
+        execute(cmd);
+    }
+}
+#En we wachten op de volgende toets.
+
+
+getCommandFor(key) {
+   returns error if no keymapping exists
+}
+
+fizzle(){
+    Writo.activeCommand = null;
+}
+
+Writo.activeCommand.handle(key){
+    //get a command
+    //test if it has a handler
+    //if so, return it
+    //return yourself
+    //whatever, make sure to remove your handler when you're done
+}
+
+execute(cmd){
+    cmd.doCommand();
+    cmd.isExecuted = true;
+    undoStack.push(cmd);
+}
+
+Een paar commando's
+-------------------
+MoveCursor:
+    Als het kan:
+        doCommand verplaatst de cursor
+        undoCommand verplaatst de andere kant op
+    Anders
+        twee lege functies
+    geen handle()
+
+Multiply:
+    doCommand voert x-keer het doCommand van de onderliggende functie uit
+    undoCommand idem voor undo
+    handle() pakt een getal of valide commando
+        als getal:
+            amount = amount*10+getal
+        als valide commando:
+            doe "als de status blank is"
+            delete this.handle 
+        s
+
+Range:
+
+Apply Style:
+
