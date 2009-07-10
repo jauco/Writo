@@ -12,7 +12,8 @@
                 var keys = {
                     esc:27,
                     leftCursor: 104,
-                    rightCursor: 108
+                    rightCursor: 108,
+                    backspace: 8
                 }
                 var writo = nl_jauco_writo($);
                 
@@ -60,8 +61,8 @@
                     );
                     
                     same(
-                        "|",
                         $("#DocumentContainer").text(),
+                        "|",
                         "Switching shouldn't change the document"
                     );
                     key(doc, "i");//insert mode
@@ -71,41 +72,64 @@
                     key(doc, "t");
                     key(doc, keys.esc);//command mode
                     same(
-                        "test|",
                         $("#DocumentContainer").text(),
+                        "test|",
                         "Adding text works"
                     );
                     key(doc, "u");//undo
-                    key(doc, "u");//undo
-                    key(doc, "u");//undo
                     same(
-                        "t|",
                         $("#DocumentContainer").text(),
-                        "Undoing multiple times works"
+                        "|",
+                        "Undoing undo's the full command"
                     );
                     key(doc, "r");//redo
-                    key(doc, "r");//redo
                     same(
+                        $("#DocumentContainer").text(),
+                        "test|",
+                        "Redoing redo's the full command"
+                    );
+                    key(doc, keys.backspace);
+                    same(
+                        $("#DocumentContainer").text(),
                         "tes|",
-                        $("#DocumentContainer").text(),
-                        "Redoing multiple times works"
+                        "deleting works"
                     );
-                    
-                    key(doc, "u");//undo
-                    key(doc, "i");//insert mode
-                    key(doc, "r");
-                    key(doc, "u");
-                    key(doc, "g");
-                    key(doc, "k");
-                    key(doc, keys.esc);
-                    key(doc, "u");//undo
-                    
+                    key(doc, "2");
+                    key(doc, keys.backspace);
                     same(
-                        "terug|",
                         $("#DocumentContainer").text(),
-                        "Undoing, then adding new commands, then undoing again"
+                        "t|",
+                        "double manipulation works"
                     );
-                    
+                    key(doc, "u");//undo
+                    same(
+                        $("#DocumentContainer").text(),
+                        "tes|",
+                        "Undoing undo's the double manipulation"
+                    );
+                    key(doc, "2");
+                    key(doc, "i");
+                    key(doc, "x");
+                    key(doc, keys.esc);//command mode
+                    same(
+                        $("#DocumentContainer").text(),
+                        "tesxx|",
+                        "double insert works"
+                    );
+                    key(doc, "u");//undo
+                    same(
+                        $("#DocumentContainer").text(),
+                        "tes|",
+                        "Undoing undo's the double insert"
+                    );
+                    var orig = $("#DocumentContainer")[0].innerHTML;
+                    writo.reload();
+                    same(
+                        $("#DocumentContainer")[0].innerHTML,
+                        orig,
+                        "reloading works"
+                    );
+                    /*
                     key(doc, "h");
                     key(doc, "1");
                     same(
@@ -205,6 +229,7 @@
                         $("#DocumentContainer").text(),
                         "Loading the document from string should result in the same document"
                     );
+                    */
                 });
             });
         </script>
