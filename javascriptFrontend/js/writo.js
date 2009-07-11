@@ -19,7 +19,6 @@
 
 // ** {{{ String.has(searchChar) }}} **
 // Use this function to test whether a string contains the {{{searchChar}}}
-
 String.prototype.has = function (searchChar) {
     return this.indexOf(searchChar) > -1;
 };
@@ -34,7 +33,7 @@ String.prototype.isInt = function () {
 // The bookkeeping code you need to set everything up
 
 // ** Set everything up **\\
-// You can call this {{{init}}} function to get a {{{writo}}} application object.
+// You can call this {{{nl_jauco_writo}}} function to get a {{{writo}}} application object.
 function nl_jauco_writo($) {
     
     var IS_DEBUG = true;
@@ -47,17 +46,6 @@ function nl_jauco_writo($) {
         }
     }
 
-    function clone(obj){
-        if(obj == null || typeof(obj) != 'object')
-            return obj;
-        
-        var temp = new obj.constructor();
-        for (var key in obj)
-            temp[key] = clone(obj[key]);
-        return temp;
-    }
-
-    
     // ** The editor class/module **\\
 	// The actually interesting stuff is defined in this function.
 	//
@@ -79,9 +67,12 @@ function nl_jauco_writo($) {
             basicCommandHandler,
             insertCommandHandler;
 
-        var DropUndoStackFromThisPointOnwards = function(){
-            if (currentUndoPointer !== undoStack.length) {
-                undoStack.splice(currentUndoPointer, undoStack.length - currentUndoPointer);
+        var DropUndoStackFromThisPointOnwards = function(pointToDropFrom){
+            if (pointToDropFrom === undefined){
+                pointToDropFrom = currentUndoPointer;
+            }
+            if (pointToDropFrom !== undoStack.length) {
+                undoStack.splice(pointToDropFrom, undoStack.length - pointToDropFrom);
             }
         }
 
@@ -98,23 +89,55 @@ function nl_jauco_writo($) {
 		// labeled "**Returning the command objects**"
 		// Each function in COMMANDS will return an object with a doCommand and undoCommand function.
         performCommand = function () { 
+            // Some utility functions
+            function insertChar(c){
+                var curPar = $("#cursor").parent();
+                if (c === 'return'){
+                    var newPar = $("<div class='paragraph active'></div>");
+                    curPar.after(newPar);
+                    curPar.removeClass("active");
+                    newPar.append($("#cursor"));
+                }
+                else {
+                    if ($("#cursor")[0].previousSibling == null){
+                        $("#cursor").before(c);
+                    }
+                    else {
+                        $("#cursor")[0].previousSibling.textContent += c;
+                    }
+                }
+            }
+            function backspace(){
+                var prevWord = $("#cursor")[0].previousSibling;
+                if (prevWord === null || prevWord.length === 0){
+                    if ($("#cursor").parent().prevAll('.paragraph').length > 0){
+                        var curPar = $("#cursor").parent();
+                        $("#cursor").parent().prev().addClass("active");
+                        $("#cursor").parent().prev().append($("#cursor"));
+                        curPar.remove();
+                    }
+                }
+                else {
+                    var c = prevWord.textContent.slice(-1,prevWord.length)
+                    prevWord.textContent = prevWord.textContent.slice(0,-1)
+                }
+                return c;
+            }
             var COMMANDS = {
 				// ** {{{insChar }}}**
                 // Appends a character to the current element.
                 // * {{{character:}}} is the character to append
                 insChar: function ([character]) {
                     var command = {};
+                    command.insert = insertChar;
+                    command.backspace = backspace;
                     command.character = character;
                     command.doCommand = function () {
-                        $("#cursor").before(
-                            "<span class='char'>" + 
-                            this.character + 
-                            "</span>"
-                        );
+                        this.insert(this.character);
                         return this;
                     };
                     command.undoCommand = function () {
-                        $("#cursor").prev(".char").remove();
+                        this.backspace();
                     };
                     return command;
                 },
@@ -123,9 +146,9 @@ function nl_jauco_writo($) {
                 addClass: function ([className]) {
                     var command = {};
                     command.className = className;
-                    command.name = "addclass: " + command.className;
                     command.doCommand = function () {
                         $(".active").addClass(this.className);
+                        return this;
                     };
                     command.undoCommand = function () {
                         $(".active").removeClass(this.className);
@@ -179,20 +202,21 @@ function nl_jauco_writo($) {
                     }
                     return command;
                 },
-				
 				// ** {{{ DeleteChar }}} **
 				// Command that deletes the preceding element
                 deleteChar : function ([]) {
                     var command = {};
+                    command.caption = "delete "
                     command.doCommand = function () {
                         var finalizedCommand = {};
-                        finalizedCommand.deletedElement = $("#cursor").prev()[0].innerHTML;
-                        $("#cursor").prev().remove();
+                        finalizedCommand.insert = insertChar;
+                        finalizedCommand.backspace = backspace;
+                        finalizedCommand.deletedElement = backspace();
                         finalizedCommand.doCommand = function () {
-                            $("#cursor").prev().remove();
+                            this.backspace();
                         }
                         finalizedCommand.undoCommand = function () {
-                            $("#cursor").before("<span class='char'>" + finalizedCommand.deletedElement + "</span>");
+                            this.insert(this.deletedElement);
                         };
                         return finalizedCommand;
                     };
@@ -201,13 +225,14 @@ function nl_jauco_writo($) {
                 rePerform : function ([amount]) {
                     var command = {};
                     command.amount = amount;
+                    command.caption = amount+" times ";
                     command.doCommand = function () {
                         finalizedCommand = {};
                         finalizedCommand.privateUndoStack = [];
-                        finalizedCommand.command = this.command;
-                        finalizedCommand.amount = this.amount;
-                        for (var i = 0; i < this.amount; i += 1) {
-                            executeCommand(this.command, finalizedCommand.privateUndoStack);
+                        finalizedCommand.command = command.command;
+                        finalizedCommand.amount = command.amount;
+                        for (var i = 0; i < command.amount; i += 1) {
+                            executeCommand(command.command, finalizedCommand.privateUndoStack);
                         }
                         finalizedCommand.doCommand = function(){
                             for (var i = 0; i < this.amount; i += 1) {
@@ -237,6 +262,7 @@ function nl_jauco_writo($) {
                     var command = {};
                     writo.setEditMode("insert");
                     command.privateUndoStack = [];
+                    command.caption = "Insert ";
                     command.handler = function(key){
                         //Abort when we receive an <esc>
                         if (key === 'esc') {
@@ -245,7 +271,7 @@ function nl_jauco_writo($) {
                         }
                         //otherwise start handling the keypresses
                         //Only handle characters for now
-                        if (key.length === 1) {
+                        if (key.length === 1 || key === "return") {
                             executeCommand(performCommand("insChar", key), command.privateUndoStack);
                         }
                         else if (key === "backspace"){
@@ -280,7 +306,11 @@ function nl_jauco_writo($) {
 			// statement actually returns one.
             return function (commandID) {
                 var argArray = Array.slice(arguments,1);//convert the arguments 'array' to a real Array and drop commandID
-                return COMMANDS[commandID](argArray); 
+                var cmd = COMMANDS[commandID](argArray);
+                if ("caption" in cmd){
+                    $("#commandStatus").append(cmd.caption);
+                }
+                return cmd; 
             };
         }();
 
@@ -423,7 +453,6 @@ function nl_jauco_writo($) {
             return function (evt) {
                 var keyName,
                     command;
-                
                 try {
                     keyName = getKeyInfo(evt);
                     //check if we are starting the construction of a new command
@@ -454,11 +483,15 @@ function nl_jauco_writo($) {
                         previousCommand = commandBeingConstructed;
                         executeCommand(commandBeingConstructed);
                         commandBeingConstructed = undefined;
+                        $("#commandStatus").html("");
                     }
                 }
                 catch (e){
-                    commandBeingConstructed = undefined;
-                    currentKeyHandler = undefined;
+                    if (currentKeyHandler == undefined){
+                        commandBeingConstructed = undefined;
+                    }
+                    doLog(e);
+                    return true;
                 }
                 return false;
             };
@@ -468,6 +501,7 @@ function nl_jauco_writo($) {
             if (currentUndoPointer > 0) {
                 currentUndoPointer -= 1;
                 undoStack[currentUndoPointer].undoCommand();
+                writo.save();
             }
             else {
                 doLog("There's nothing to undo");
@@ -478,6 +512,7 @@ function nl_jauco_writo($) {
             if (currentUndoPointer < undoStack.length) {
                 undoStack[currentUndoPointer].doCommand();
                 currentUndoPointer += 1;
+                writo.save();
             }
             else {
                 doLog("There's nothing to redo");
@@ -485,23 +520,29 @@ function nl_jauco_writo($) {
         }
         
         writo.cleanDocument = function(){
-            DropUndoStackFromThisPointOnwards();
+            DropUndoStackFromThisPointOnwards(0);
             $("#DocumentContainer")[0].innerHTML = "<div class='active paragraph'><span id='cursor'>|</span></div>";
         }
         
         writo.giveName = function(){}
         
         writo.load = function(cmdArray){
-            doLog("loading");
             this.cleanDocument();
-            if ("document" in localStorage && "currentUndoPointer" in localStorage){
-                undoStack = eval("("+localStorage.document+")");
-                currentUndoPointer = localStorage.currentUndoPointer;
-                if (undoStack.constructor === Array){
-                    for(var i=0; i<currentUndoPointer; i++){
-                        undoStack[i].doCommand();
+            try {
+                if ("document" in localStorage && "currentUndoPointer" in localStorage){
+                    doLog("loading");
+                    undoStack = eval("("+localStorage.document+")");
+                    currentUndoPointer = parseInt(localStorage.currentUndoPointer);
+                    if (undoStack.constructor === Array && currentUndoPointer > -1){
+                        for(var i=0; i<currentUndoPointer; i++){
+                            undoStack[i].doCommand();
+                        }
                     }
                 }
+            }
+            catch(e){
+                doLog(e);
+                this.cleanDocument();
             }
         }
         
@@ -510,14 +551,21 @@ function nl_jauco_writo($) {
         }
         
         writo.save = function(){
-            doLog("saving");
-            localStorage.document = undoStack.toSource();
+            var undoStackAsString = undoStack.toSource();
+            doLog("saving "+undoStackAsString.length+" bytes");
+            localStorage.document = undoStackAsString;
             localStorage.currentUndoPointer = currentUndoPointer;
         }
         
         writo.reload = function(){
             this.save();
             this.load();
+        }
+
+        writo.removeSaved = function(){
+            this.cleanDocument();
+            delete localStorage.document;
+            delete localStorage.currentUndoPointer;
         }
 
         return writo;
@@ -528,5 +576,6 @@ function nl_jauco_writo($) {
     $(document).bind("keypress.WritoHandler", writoEditor.keyHandler);
     writoEditor.setEditMode("command");
     writoEditor.load();
+    window.nl_jauco_writo = writoEditor;
     return writoEditor;
 }
