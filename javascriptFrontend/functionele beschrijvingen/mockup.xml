@@ -1,0 +1,206 @@
+<mockup version="1.0" skin="sketch" measuredW="1674" measuredH="873">
+  <controls>
+    <control controlID="64" controlTypeID="com.balsamiq.mockups::CallOut" x="228" y="95" w="-1" h="-1" measuredW="38" measuredH="40" zOrder="24" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>2</text>
+      </controlProperties>
+    </control>
+    <control controlID="65" controlTypeID="com.balsamiq.mockups::CallOut" x="1610" y="18" w="-1" h="-1" measuredW="38" measuredH="40" zOrder="26" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>2</text>
+      </controlProperties>
+    </control>
+    <control controlID="66" controlTypeID="com.balsamiq.mockups::StickyNote" x="1342" y="18" w="306" h="159" measuredW="109" measuredH="123" zOrder="25" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Pressing%20a%20key%20will%20start%20the%20command%20creation%2C%20but%20pressing%20a%20colon%20%28%27%3A%27%29%20will%20focus%20the%20dropdown%2C%20allowing%20for%20less%20used%2C%20longer%20commands%20%28such%20as%20%27spell%20check%27%29%20to%20be%20entered%20by%20the%20user.</text>
+      </controlProperties>
+    </control>
+    <control controlID="13" controlTypeID="com.balsamiq.mockups::BrowserWindow" x="14" y="10" w="1311" h="853" measuredW="450" measuredH="400" zOrder="0" locked="false" isInGroup="-1">
+      <controlProperties>
+        <value>100</value>
+        <text>On%20the%20importance%20of%20being%20Earnest%20-%20Writo%0Ahttp%3A//writo.com/OntheimportanceofbeingEarnest%23TheRiseOfTheLycans/introduction</text>
+        <verticalScrollbar>true</verticalScrollbar>
+      </controlProperties>
+    </control>
+    <control controlID="15" controlTypeID="com.balsamiq.mockups::FieldSet" x="166" y="103" w="502" h="189" measuredW="200" measuredH="170" zOrder="1" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Paragraph%201</text>
+      </controlProperties>
+    </control>
+    <control controlID="16" controlTypeID="com.balsamiq.mockups::FieldSet" x="166" y="315" w="502" h="178" measuredW="200" measuredH="170" zOrder="3" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Conclusion</text>
+      </controlProperties>
+    </control>
+    <control controlID="19" controlTypeID="com.balsamiq.mockups::ComboBox" x="44" y="95" w="-1" h="-1" measuredW="184" measuredH="112" zOrder="5" locked="false" isInGroup="-1">
+      <controlProperties>
+        <icon>GearIcon%7Csmall</icon>
+        <text>%5BTwice%5D%20%5BDelete%5D%20...%0A%28W%29ord%0A%28S%29entence%0A%28E%29nd%20of%20...%0A%28B%29eginning%20of%20...</text>
+      </controlProperties>
+    </control>
+    <control controlID="20" controlTypeID="com.balsamiq.mockups::SearchBox" x="1119" y="95" w="-1" h="-1" measuredW="158" measuredH="25" zOrder="6" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>type%20/%20to%20search</text>
+      </controlProperties>
+    </control>
+    <control controlID="22" controlTypeID="com.balsamiq.mockups::Title" x="121" y="504" w="-1" h="-1" measuredW="229" measuredH="34" zOrder="7" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>The%20rise%20of%20the%20Lycans</text>
+        <size>20</size>
+      </controlProperties>
+    </control>
+    <control controlID="24" controlTypeID="com.balsamiq.mockups::Paragraph" x="181" y="113" w="472" h="164" measuredW="200" measuredH="140" zOrder="2" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Lorem%20ipsum%20dolor%20sit%20amet%2C%20consectetur%20adipiscing%20elit.%20Quisque%20a%20nisl%20nec%20felis%20auctor%20suscipit.%20In%20nec%20enim%20a%20augue%20convallis%20pellentesque%20eget%20sed%20mi.%20Class%20aptent%20taciti%20sociosqu%20ad%20litora%20torquent%20per%20conubia%20nostra%2C%20per%20inceptos%20himenaeos.%20Duis%20nisl%20magna%2C%20gravida%20pretium%20lacinia%20eget%2C%20aliquet%20eu%20risus.%20Aenean%20euismod%20tincidunt%20pharetra.%20Nam%20viverra%20blandit%20nisi%2C%20nec%20ultricies%20felis%20vehicula%20ut.%20Quisque%20in%20turpis%20metus.%20Cras%20tincidunt%20cursus%20tincidunt.%20Nam%20vel%20lectus%20magna.%20Donec%20varius%2C%20nibh%20sit%20amet%20gravida%20consequat%2C%20diam%20leo%20laoreet%20eros%2C%20eu%20ultricies%20risus%20dui%20ac%20velit.</text>
+      </controlProperties>
+    </control>
+    <control controlID="25" controlTypeID="com.balsamiq.mockups::Paragraph" x="174" y="330" w="472" h="163" measuredW="200" measuredH="140" zOrder="8" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Class%20aptent%20taciti%20sociosqu%20ad%20litora%20torquent%20per%20conubia%20nostra%2C%20per%20inceptos%20himenaeos.%20Duis%20nisl%20magna%2C%20gravida%20pretium%20lacinia%20eget%2C%20aliquet%20eu%20risus.%20%0AAenean%20euismod%20tincidunt%20pharetra.%20Nam%20viverra%20blandit%20nisi%2C%20nec%20ultricies%20felis%20vehicula%20ut.%20Quisque%20in%20turpis%20metus.%20Cras%20tincidunt%20cursus%20tincidunt.%20Nam%20vel%20lectus%20magna.%20Donec%20varius%2C%20nibh%20sit%20amet%20gravida%20consequat%2C%20diam%20leo%20laoreet%20eros%2C%20eu%20ultricies%20risus%20dui%20ac%20velit.%20Morbi%20in%20nisi%20lorem%2C%20nec%20pharetra%20lacus.%20Nullam%20viverra%20ultrices%20lacus.</text>
+      </controlProperties>
+    </control>
+    <control controlID="26" controlTypeID="com.balsamiq.mockups::Canvas" x="29" y="88" w="1263" h="40" measuredW="100" measuredH="70" zOrder="4" locked="false" isInGroup="-1">
+      <controlProperties>
+        <backgroundAlpha>1</backgroundAlpha>
+      </controlProperties>
+    </control>
+    <control controlID="27" controlTypeID="com.balsamiq.mockups::VCurly" x="674" y="392" w="180" h="101" measuredW="180" measuredH="140" zOrder="9" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>This%20is%20my%20comment%20about%20this%20paragraph</text>
+      </controlProperties>
+    </control>
+    <control controlID="28" controlTypeID="com.balsamiq.mockups::Label" x="525" y="93" w="-1" h="-1" measuredW="357" measuredH="34" zOrder="10" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>On%20the%20importance%20of%20being%20Earnest</text>
+        <state>up</state>
+        <size>20</size>
+      </controlProperties>
+    </control>
+    <control controlID="34" controlTypeID="com.balsamiq.mockups::CallOut" x="121" y="305" w="-1" h="-1" measuredW="38" measuredH="39" zOrder="11" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>1</text>
+      </controlProperties>
+    </control>
+    <control controlID="37" controlTypeID="com.balsamiq.mockups::LineChart" x="44" y="327" w="102" h="78" measuredW="187" measuredH="175" zOrder="12" locked="false" isInGroup="-1"/>
+    <control controlID="38" controlTypeID="com.balsamiq.mockups::Arrow" x="93" y="405" w="147" h="40" measuredW="150" measuredH="100" zOrder="13" locked="false" isInGroup="-1">
+      <controlProperties>
+        <backgroundAlpha>0.25</backgroundAlpha>
+        <rightArrow>true</rightArrow>
+        <curvature>-1</curvature>
+        <leftArrow>false</leftArrow>
+        <direction>top</direction>
+      </controlProperties>
+    </control>
+    <control controlID="39" controlTypeID="com.balsamiq.mockups::Tree" x="1074" y="142" w="218" h="150" measuredW="300" measuredH="220" zOrder="17" locked="false" isInGroup="-1">
+      <controlProperties>
+        <value>0</value>
+        <verticalScrollbar>false</verticalScrollbar>
+        <backgroundAlpha>1</backgroundAlpha>
+        <text>%3E%20Introduction%0A%3E%20Problem%20definition%0A%3E%20Approach%0Av%20The%20rise%20of%20the%20Lycans%0A%20-Introduction</text>
+        <color>15790322</color>
+        <selectedIndex>4</selectedIndex>
+      </controlProperties>
+    </control>
+    <control controlID="43" controlTypeID="com.balsamiq.mockups::StickyNote" x="1342" y="344" w="322" h="195" measuredW="109" measuredH="123" zOrder="14" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>When%20editing%20a%20paragraph%2C%20you%20can%20enter%20%27config%27%20mode%2C%20which%20will%20turn%20the%20paragraph%20around%20and%20show%20some%20settings%20on%20the%20backside.%20Among%20these%20are%20style%20%28such%20as%20quote%2C%20heading%29%2C%20template%20%28such%20as%20bibliography%20entry%2C%20contact%20entry%2C%20appointment%20etc.%29%2C%20the%20slug%20that%20is%20used%20in%20links%2C%20whether%20it%20should%20be%20printed</text>
+      </controlProperties>
+    </control>
+    <control controlID="45" controlTypeID="com.balsamiq.mockups::Canvas" x="548" y="193" w="49" h="22" measuredW="100" measuredH="70" zOrder="15" locked="false" isInGroup="-1">
+      <controlProperties>
+        <backgroundAlpha>0</backgroundAlpha>
+        <verticalScrollbar>false</verticalScrollbar>
+        <borderStyle>square</borderStyle>
+      </controlProperties>
+    </control>
+    <control controlID="46" controlTypeID="com.balsamiq.mockups::VCurly" x="668" y="177" w="250" h="54" measuredW="180" measuredH="140" zOrder="16" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>This%20my%20comment%20about%20blandit</text>
+      </controlProperties>
+    </control>
+    <control controlID="50" controlTypeID="com.balsamiq.mockups::Paragraph" x="1074" y="305" w="-1" h="-1" measuredW="200" measuredH="140" zOrder="18" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>*Words*%3A%204102%0A*Pages*%3A%2030%20to%2040</text>
+        <bold>false</bold>
+      </controlProperties>
+    </control>
+    <control controlID="54" controlTypeID="com.balsamiq.mockups::Paragraph" x="678" y="627" w="-1" h="-1" measuredW="200" measuredH="140" zOrder="19" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>*Naam%3A*%20van%20Driebergen%0A*Voorletters%3A*%20J.L.M.%0A*Release%3A*%202009%0A*Titel%3A*%20Iaculis%2C%20Iaculi</text>
+        <bold>false</bold>
+      </controlProperties>
+    </control>
+    <control controlID="55" controlTypeID="com.balsamiq.mockups::FieldSet" x="674" y="612" w="175" h="105" measuredW="200" measuredH="170" zOrder="20" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>Van%20Driebergen%202009</text>
+      </controlProperties>
+    </control>
+    <control controlID="57" controlTypeID="__group__" x="1342" y="550" w="-1" h="-1" measuredW="307" measuredH="196" zOrder="21" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="53" controlTypeID="com.balsamiq.mockups::StickyNote" x="0" y="0" w="307" h="196" measuredW="109" measuredH="123" zOrder="0" locked="false" isInGroup="57">
+          <controlProperties>
+            <text>The%20bibliography%20is%20a%20paragraph%20with%20the%20bibliography%20template.%20This%20is%20a%20reference%20to%20that%20paragraph%20rendered%20using%20the%20document%20default%20for%20bibliography.%20You%20can%20navigate%20to%20it%20and%20press%20the%20show%20target%20button%20to%20show%20the%20original%20paragraph%20alongside.</text>
+          </controlProperties>
+        </control>
+        <control controlID="56" controlTypeID="com.balsamiq.mockups::CallOut" x="243" y="134" w="38" h="40" measuredW="38" measuredH="40" zOrder="1" locked="false" isInGroup="57">
+          <controlProperties>
+            <backgroundAlpha>0.5</backgroundAlpha>
+            <text>3</text>
+          </controlProperties>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+    <control controlID="58" controlTypeID="__group__" x="1342" y="193" w="-1" h="-1" measuredW="243" measuredH="146" zOrder="22" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="31" controlTypeID="com.balsamiq.mockups::StickyNote" x="0" y="0" w="243" h="146" measuredW="109" measuredH="123" zOrder="0" locked="false" isInGroup="58">
+          <controlProperties>
+            <text>Images%20are%20thumbnails%20that%20belong%20to%20a%20word%20or%20sentence.%20LaTeX%20will%20put%20them%20on%20the%20right%20spot</text>
+          </controlProperties>
+        </control>
+        <control controlID="35" controlTypeID="com.balsamiq.mockups::CallOut" x="182" y="85" w="38" h="40" measuredW="38" measuredH="40" zOrder="1" locked="false" isInGroup="58">
+          <controlProperties>
+            <text>1</text>
+          </controlProperties>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+    <control controlID="61" controlTypeID="__group__" x="166" y="550" w="502" h="242" measuredW="502" measuredH="242" zOrder="23" locked="false" isInGroup="-1">
+      <groupChildrenDescriptors>
+        <control controlID="59" controlTypeID="__group__" x="0" y="0" w="502" h="242" measuredW="502" measuredH="242" zOrder="0" locked="false" isInGroup="61">
+          <groupChildrenDescriptors>
+            <control controlID="17" controlTypeID="com.balsamiq.mockups::FieldSet" x="0" y="0" w="502" h="242" measuredW="200" measuredH="170" zOrder="0" locked="false" isInGroup="59">
+              <controlProperties>
+                <text>Introduction</text>
+              </controlProperties>
+            </control>
+            <control controlID="30" controlTypeID="com.balsamiq.mockups::Paragraph" x="8" y="13" w="479" h="229" measuredW="200" measuredH="140" zOrder="1" locked="false" isInGroup="59">
+              <controlProperties>
+                <text>Mauris%20venenatis%20condimentum%20lorem.%20Vivamus%20et%20magna%20blandit%20tellus%20ornare%20congue%20id%20non%20massa.%20Duis%20ut%20faucibus%20mauris.%20Maecenas%20magna%20leo%2C%20semper%20sit%20amet%20imperdiet%20sed%2C%20facilisis%20sit%20amet%20neque.%20Integer%20at%20diam%20felis%2C%20nec%20tempus%20dui.%20Suspendisse%20lacus%20nisi%2C%20eleifend%20at%20iaculis%20non%2C%20pellentesque%20at%20lorem.%20Aenean%20iaculis%20%28van%20Driebergen%202009%29%2C%20tellus%20eu%20tincidunt%20consectetur%2C%20velit%20eros%20viverra%20tortor%2C%20eget%20tincidunt%20nisl%20ipsum%20a%20leo.%20Nunc%20orci%20sem%2C%20blandit%20in%20venenatis%20in%2C%20luctus%20at%20diam.%20Proin%20blandit%20eleifend%20luctus.%20Sed%20arcu%20mauris%2C%20pretium%20egestas%20ullamcorper%20sit%20amet%2C%20posuere%20id%20metus.%20Suspendisse%20potenti.%20Aenean%20eu%20odio%20eu%20dui%20vehicula%20condimentum%20ut%20vel%20enim.%20Mauris%20laoreet%20aliquam%20dui%20a%20tempus.%20Ut%20fermentum%20quam%20id%20libero%20pellentesque%20ultrices%20volutpat%20lacus%20consequat.%20</text>
+              </controlProperties>
+            </control>
+            <control controlID="40" controlTypeID="com.balsamiq.mockups::VRule" x="305" y="216" w="-1" h="17" measuredW="5" measuredH="100" zOrder="2" locked="false" isInGroup="59">
+              <controlProperties>
+                <color>65280</color>
+              </controlProperties>
+            </control>
+          </groupChildrenDescriptors>
+        </control>
+        <control controlID="60" controlTypeID="__group__" x="244" y="70" w="176" h="49" measuredW="176" measuredH="49" zOrder="1" locked="false" isInGroup="61">
+          <groupChildrenDescriptors>
+            <control controlID="51" controlTypeID="com.balsamiq.mockups::Canvas" x="0" y="22" w="153" h="27" measuredW="100" measuredH="70" zOrder="0" locked="false" isInGroup="60">
+              <controlProperties>
+                <backgroundAlpha>0</backgroundAlpha>
+              </controlProperties>
+            </control>
+            <control controlID="52" controlTypeID="com.balsamiq.mockups::CallOut" x="138" y="0" w="38" h="40" measuredW="38" measuredH="40" zOrder="1" locked="false" isInGroup="60">
+              <controlProperties>
+                <backgroundAlpha>1</backgroundAlpha>
+                <text>3</text>
+              </controlProperties>
+            </control>
+          </groupChildrenDescriptors>
+        </control>
+      </groupChildrenDescriptors>
+    </control>
+  </controls>
+</mockup>

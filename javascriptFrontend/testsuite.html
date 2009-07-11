@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>Writo Unit Tests</title>
+        <link rel="stylesheet" href="css/testsuite.css" type="text/css" media="screen" />
+        <script type="application/javascript;version=1.8" src="js/jquery.js"></script>
+        <script type="application/javascript;version=1.8" src="js/testrunner.js"></script>
+        <script type="application/javascript;version=1.8" src="js/writo.js"></script>
+        <script type="application/javascript;version=1.8">
+            jQuery(function($){
+                var keys = {
+                    esc:27,
+                    leftCursor: 104,
+                    rightCursor: 108,
+                    backspace: 8
+                }
+                var writo = nl_jauco_writo($);
+                
+                var key = function( node, letter ){
+                    var keyCode = letter, charCode = 0;
+
+                    if ( typeof keyCode == "string" ) {
+                        charCode = keyCode.charCodeAt(0);
+                        keyCode = 0;
+                    }
+
+                    var doc = node.ownerDocument, event = doc.createEvent("KeyEvents");
+                    event.initKeyEvent("keypress", true, true, doc.defaultView, false, false, false, false, keyCode, charCode);
+                    return node.dispatchEvent( event );
+                }
+
+                var doc = document.getElementsByTagName("body")[0];
+
+				// == The functional tests ==
+                // The following tests verify that manipulating a certain series of knobs will 
+                // # have the desired effect
+                // # will always have this effect even ten releases later.
+                test("Functional Tests", function() {
+
+                    same(
+                        "|",
+                        $("#DocumentContainer").text(),
+                        "Test if document is empty, except for cursor"
+                    );
+
+                    //"Pressing undo when nothing is done yet, should gracefully fail, by doing nothing"
+                    key(doc, "u");
+                    //"Pressing redo when nothing is done yet, should gracefully fail, by doing nothing"
+                    key(doc, "r");//insert mode
+                    
+                    key(doc, "i");//insert mode
+                    ok(
+                        $("body").hasClass("insert"), 
+                        "Pressing 'i' puts writo in insert mode"
+                    );
+                    key(doc, keys.esc);//command mode
+                    ok(
+                        $("body").hasClass("command"), 
+                        "Pressing 'esc' puts writo back in command mode"
+                    );
+                    
+                    same(
+                        $("#DocumentContainer").text(),
+                        "|",
+                        "Switching shouldn't change the document"
+                    );
+                    key(doc, "i");//insert mode
+                    key(doc, "t");
+                    key(doc, "e");
+                    key(doc, "s");
+                    key(doc, "t");
+                    key(doc, keys.esc);//command mode
+                    same(
+                        $("#DocumentContainer").text(),
+                        "test|",
+                        "Adding text works"
+                    );
+                    key(doc, "u");//undo
+                    same(
+                        $("#DocumentContainer").text(),
+                        "|",
+                        "Undoing undo's the full command"
+                    );
+                    key(doc, "r");//redo
+                    same(
+                        $("#DocumentContainer").text(),
+                        "test|",
+                        "Redoing redo's the full command"
+                    );
+                    key(doc, keys.backspace);
+                    same(
+                        $("#DocumentContainer").text(),
+                        "tes|",
+                        "deleting works"
+                    );
+                    key(doc, "2");
+                    key(doc, keys.backspace);
+                    same(
+                        $("#DocumentContainer").text(),
+                        "t|",
+                        "double manipulation works"
+                    );
+                    key(doc, "u");//undo
+                    same(
+                        $("#DocumentContainer").text(),
+                        "tes|",
+                        "Undoing undo's the double manipulation"
+                    );
+                    key(doc, "2");
+                    key(doc, "i");
+                    key(doc, "x");
+                    key(doc, keys.esc);//command mode
+                    same(
+                        $("#DocumentContainer").text(),
+                        "tesxx|",
+                        "double insert works"
+                    );
+                    key(doc, "u");//undo
+                    same(
+                        $("#DocumentContainer").text(),
+                        "tes|",
+                        "Undoing undo's the double insert"
+                    );
+                    var orig = $("#DocumentContainer")[0].innerHTML;
+                    writo.reload();
+                    same(
+                        $("#DocumentContainer")[0].innerHTML,
+                        orig,
+                        "reloading works"
+                    );
+                    /*
+                    key(doc, "h");
+                    key(doc, "1");
+                    same(
+                        "ter|ug",
+                        $("#DocumentContainer").text(),
+                        "Doing a combo command, resulting in two left presses"
+                    );
+                    
+                    key(doc, "l");
+                    same(
+                        "teru|g",
+                        $("#DocumentContainer").text(),
+                        "Pressing the right cursor once"
+                    );
+
+                    key(doc, "l");
+                    key(doc, "l");
+                    key(doc, "i");//insert mode
+                    key(doc, " ");
+                    key(doc, keys.esc);
+                    same(
+                        "terug |",
+                        $("#DocumentContainer").text(),
+                        "Walking past the end of the text fails gracefully"
+                    );
+                    key(doc, "x");
+                    same(
+                        "terug|",
+                        $("#DocumentContainer").text(),
+                        "Characters can be deleted"
+                    );
+
+                    key(doc, "u");
+                    same(
+                        "terug |",
+                        $("#DocumentContainer").text(),
+                        "Delete can be undone"
+                    );
+
+                    
+                    key(doc, "b");
+                    ok(
+                        $("#DocumentContainer > div").hasClass("heading"), 
+                        "Pressing 'b' will apply the style 'heading' to the current paragraph"
+                    );
+
+                    key(doc, "u");
+                    ok(
+                        !$("#DocumentContainer > div").hasClass("heading"), 
+                        "Setting heading can be undone"
+                    );
+
+                    key(doc, "x");
+                    key(doc, "1");
+                    same(
+                        "teru|",
+                        $("#DocumentContainer").text(),
+                        "Reperform the last command by pressing the 1"
+                    );
+                    
+                    key(doc, "x");
+                    key(doc, "2");
+                    key(doc, "u");
+                    same(
+                        "ter|",
+                        $("#DocumentContainer").text(),
+                        "Multiplied commands appear as one command on the undo stack"
+                    );
+
+                    
+                    key(doc, "h");
+                    key(doc, "i");
+                    key(doc, "x");
+                    key(doc, keys.esc);
+                    key(doc, "l");
+                    key(doc, "u");
+                    key(doc, "u");
+                    key(doc, "u");
+                    
+                    same(
+                        "ter|",
+                        $("#DocumentContainer").text(),
+                        "Test if undo works when navigating"
+                    );
+
+                    writo.giveName("foo");
+                    writo.cleanDocument();
+                    same(
+                        "|",
+                        $("#DocumentContainer").text(),
+                        "CleanDocument should clean the content"
+                    );
+                    
+                    writo.reload();
+                    same(
+                        "ter|",
+                        $("#DocumentContainer").text(),
+                        "Loading the document from string should result in the same document"
+                    );
+                    */
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <h1>Writo Unit Tests</h1>
+        <h2 id="banner"></h2>
+        <h2 id="userAgent"></h2>
+        <ol id="tests"></ol>
+        <div id="main"></div>
+        <div style="display:none">
+        <div id="DocumentContainer"></div>
+        </div>
+    </body>
+</html>
