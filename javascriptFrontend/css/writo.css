@@ -53,3 +53,13 @@ span#cursor {
     font-weight: bold;
     font-size: 1.2em;
 }
+
+#DocumentContainer p {
+    display: inline-block;
+    margin-right:0.25em;
+    padding-right:0.25em;
+}
+
+#DocumentContainer div.active p {
+    border-right: thin solid lightgray;
+}

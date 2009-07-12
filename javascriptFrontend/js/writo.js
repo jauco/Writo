@@ -240,14 +240,18 @@ function nl_jauco_writo($) {
             // Some utility functions
             function insertChar(c){
                 var curPar = $("#cursor").parent();
+                
                 if (c === 'return'){
                     var newPar = $("<div class='paragraph active'></div>");
                     curPar.after(newPar);
                     curPar.removeClass("active");
                     newPar.append($("#cursor"));
                 }
+                else if ('.!?'.has(c)){//insert a sentence marker when ending a sentence.
+                    $("#cursor").before($("<p>"+c+"</p>"));
+                }
                 else {
-                    if ($("#cursor")[0].previousSibling == null){
+                    if ($("#cursor")[0].previousSibling == null || $("#cursor")[0].previousSibling.nodeType != 3){
                         $("#cursor").before(c);
                     }
                     else {
@@ -257,16 +261,20 @@ function nl_jauco_writo($) {
             }
             function backspace(){
                 var prevWord = $("#cursor")[0].previousSibling;
-                if (prevWord === null || prevWord.length === 0){
+                if (prevWord === null || prevWord.length === 0 || prevWord.nodeType != 3){
                     if ($("#cursor").parent().prevAll('.paragraph').length > 0){
                         var curPar = $("#cursor").parent();
                         $("#cursor").parent().prev().addClass("active");
                         $("#cursor").parent().prev().append($("#cursor"));
                         curPar.remove();
                     }
+                    if ($("#cursor").prev()[0].nodeName == "P"){
+                        $(prevWord).remove();
+                        $("#cursor").prev().remove();
+                    }
                 }
                 else {
-                    var c = prevWord.textContent.slice(-1,prevWord.length)
+                    var c = prevWord.textContent.slice(-1)
                     prevWord.textContent = prevWord.textContent.slice(0,-1)
                 }
                 return c;
