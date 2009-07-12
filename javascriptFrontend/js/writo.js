@@ -12,10 +12,6 @@
 
 // = Writo Javascript frontend =
 //
-// This script contains the Writo javascript frontend.
-// 
-// == Some convenience functions ==
-// 	Of course this app starts with my own personal convenience favourites.
 
 // ** {{{ String.has(searchChar) }}} **
 // Use this function to test whether a string contains the {{{searchChar}}}
@@ -29,15 +25,18 @@ String.prototype.isInt = function () {
     return parseInt(this, 10) + "" === this[0];
 };
 
-// == Declarations ==
-// The bookkeeping code you need to set everything up
+// == function nl_jauco_writo($) ==
+// This function is defined on the window object, so you can call it from another script.
+// it will return an object that exposes the API you can use to manipulate the document
+// such as save() and load(). Once you call it, it will also register itself as a keypress monitor
+// and it will construct a bare document skeleton on the div with id=DocumentContainer.
+// 
+// You should pass it a reference to the jQuery object
 
-// ** Set everything up **\\
-// You can call this {{{nl_jauco_writo}}} function to get a {{{writo}}} application object.
 function nl_jauco_writo($) {
-    
+
+    // First some logging functions
     var IS_DEBUG = true;
-    
     var doLog = function(){
         if (IS_DEBUG){
             if (window.console){
@@ -45,49 +44,198 @@ function nl_jauco_writo($) {
             }
         }
     }
+    
+    // == The init code ==
+	
+    // The following lines will set up the writohandler.
+    var createWritoEditor;
+    var writoEditor = createWritoEditor();
+    $(document).bind("keypress.WritoHandler", writoEditor.keyHandler);
+    writoEditor.setEditMode("command");
+    writoEditor.load();
+    return writoEditor;
 
-    // ** The editor class/module **\\
-	// The actually interesting stuff is defined in this function.
-	//
-	// //This var writoEditor = function(){[...]}() is a trick to create a scope 
-    // (you define a function that you call immediately)//
-    var writoEditor = function () {
+    // ** The editor module **
+    
+	// This function creates an object called {{{writo}}} adds API functions to it, and returns it.
+    
+    function createWritoEditor() {
 		
-		// ** Global definitions **
-		// We'll start of with the header declarattions. \\ 
+		// ** Global definitions **\\
+		// We'll start of with the header declarations. \\ 
 		// //All the declared variables are 'global' for within this function, declaring them here
-		// reminds me of that fact.//
+		// reminds me of that fact and allows me to call them before they are defined.//
 		
-        // **{{{writo}}}** is the object that will be returned
-        var writo = {}, 
+        
+        var 
+            // **{{{writo}}}** is the object that will be returned. //everything declared with **var** 
+            // will be hidden once the writo object is returned. Only the functions declared as writo.X will be part
+            // of the public API.//
+            writo = {}, 
+            //**{{{undoStack}}}** is an array with all commands that have been executed
             undoStack = [],
+            //**{{{currentUndoPointer}}}** points to the current place in the undoStack
             currentUndoPointer = 0,
-			// **These are the three functions** that {{{writo}}} provides.
+            //**{{{}}}**These functions are described at their implementation
+            
             performCommand,
             basicCommandHandler,
-            insertCommandHandler;
-
-        var DropUndoStackFromThisPointOnwards = function(pointToDropFrom){
-            if (pointToDropFrom === undefined){
-                pointToDropFrom = currentUndoPointer;
-            }
-            if (pointToDropFrom !== undoStack.length) {
-                undoStack.splice(pointToDropFrom, undoStack.length - pointToDropFrom);
-            }
-        }
+            insertCommandHandler,
+            DropUndoStackFromThisPointOnwards,
+            executeCommand,
+            getCommand;
 
 		// == Command objects ==
 		// Writo is created in a pluggable way, all commands that the user can execute are
-		// written as seperate functions that are then passed around and will
-		// eventually be persisted. This part of the code shows how the commands are created.
+		// written as seperate black box functions that are then passed around and persisted.
+
+        // **{{{keyHandler}}}** receives an event object, extracts the key and
+        // creates a command to execute. If that command has a handler function defined, it will not
+        // immediately execute it, but instead continue to pass the following keypresses to that handler function. The result of
+        // calling that function is another (or the same) handler function or {{{null}}}. Once {{{null}}} is returned created command is passed to the exectuteCommand function
+        // which pushes it on the undo stack.
         //
-        //  ** {{{performCommand }}} **
-		// In the last part of the code you'll see that I link key presses to 
-		// command objects. The function performCommand actually creates these
-		// command objects. The first part will define all possible commands. 
-		// If you want to know how they are used, you can scroll to the part
-		// labeled "**Returning the command objects**"
-		// Each function in COMMANDS will return an object with a doCommand and undoCommand function.
+        // The power of this system lies in the fact that a handler function has complete freedom to do 
+        // whatever it wants. For example: The insert command keeps a private undoStack and silently creates insChar commands (resulting in characters appearing on the screen
+        // before the insert command is finished. The rePerform command on the other hand proxies the command it is rePerforming by returning //that// command's handler.
+        writo.keyHandler = function(){ //Closure, this is executed at the end.
+            var functionKeyMapping,
+                getKeyInfo,
+                commandBeingConstructed,
+                currentKeyHandler = [],
+                previousCommand;
+            // **{{{functionKeyMapping}}}** map id's to human friendly names (all at least two chars long to seperate them from ordinary keys)
+            var functionKeyMapping = {
+                8:   "backspace",
+                20:  "capslock",
+                46:  "del",
+                40:  "down",
+                35:  "end",
+                27:  "esc",
+                112: "f1",
+                113: "f2", 
+                114: "f3", 
+                115: "f4", 
+                116: "f5", 
+                117: "f6", 
+                118: "f7", 
+                119: "f8", 
+                120: "f9", 
+                121: "f10", 
+                122: "f11", 
+                123: "f12",
+                36:  "home", 
+                45:  "insert", 
+                37:  "left", 
+                144: "numlock", 
+                34:  "pagedown", 
+                33:  "pageup", 
+                19:  "pause", 
+                38:  "up", 
+                13:  "return", 
+                39:  "right",
+                145: "scroll", 
+                32:  "space", 
+                9:   "tab"
+            };
+            
+            // **{{{getKeyInfo}}}**Takes an event and either returns a string with the char or keyName or throws an error if the key is unknown
+            var getKeyInfo = function(evt){
+                if (evt.keyCode === undefined || evt.keyCode === 0) {
+                    return String.fromCharCode(evt.charCode);
+                }
+                else {
+                    if (functionKeyMapping.hasOwnProperty(evt.keyCode)) {
+                        return functionKeyMapping[evt.keyCode];
+                    }
+                    else {
+                        throw ( new Error('UnknownKeyMapping'));
+                    }
+                }
+            }
+            // **{{{}}}**This is the actual keyHandler function.
+            return function (evt) {
+                var keyName,
+                    command;
+                try {
+                    keyName = getKeyInfo(evt);
+                    //check if we are starting the construction of a new command
+                    if (commandBeingConstructed === undefined){
+                        //if we are, and the key is a '.' simply execute the previous command again
+                        if (keyName=='.' && previousCommand.doCommand !== undefined){
+                            commandBeingConstructed = previousCommand;
+                        }
+                        else {
+                            //If the key is no '.' retrieve a command object based on the key
+                            commandBeingConstructed = getCommand(keyName);
+                            //Test if it's a valid command
+                            if (commandBeingConstructed.doCommand !== undefined){
+                                currentKeyHandler = commandBeingConstructed.handler;
+                            }
+                            //Else it's a special command (undo or redo) They are treated a bit differently, since they shouldn't be on the undo stack
+                            else {
+                                commandBeingConstructed();
+                                commandBeingConstructed = undefined;
+                            }
+                        }
+                    } else {
+                        //If we aren't then pass the key to the current handler and assign it's result to itself
+                        currentKeyHandler = currentKeyHandler(keyName);
+                    }
+                    // Test if the command is ready to be execute
+                    if (commandBeingConstructed !== undefined && currentKeyHandler === undefined){
+                        previousCommand = commandBeingConstructed;
+                        executeCommand(commandBeingConstructed);
+                        commandBeingConstructed = undefined;
+                        $("#commandStatus").html("");
+                    }
+                }
+                catch (e){
+                    //If something strange occurs: ignore it
+                    if (currentKeyHandler == undefined){
+                        commandBeingConstructed = undefined;
+                    }
+                    doLog(e);
+                    return true;
+                }
+                return false;
+            };
+        }();
+        
+        //**{{{getCommand}}}** maps a key to a command object.
+        getCommand = function (key) {
+            if (key === 'u') {
+                return writo.doUndo;
+            }
+            else if (key === 'r') {
+                return writo.doRedo;
+            }
+            else if (key === "i") {
+                return performCommand("insert");
+            }
+            else if (key === "h") {
+                return performCommand("moveCursor", "prev", ".char");
+            }
+            else if (key === "b") {
+                return performCommand("addClass", "heading");
+            }
+            else if (key === "l") {
+                return performCommand("moveCursor", "next", ".char");
+            }
+            else if (key === "backspace") {
+                return performCommand("deleteChar");
+            }
+            else if (key.isInt()) {
+                return performCommand("rePerform", key);
+            }
+        };
+        
+        // **{{{performCommand }}}** The function performCommand creates command objects.
+        // Each command has a {{{doCommand()}}}, {{{undoCommand()}}} and optional {{{handler()}}} function.
+        // This function will return a command, and executeCommand will call their doCommand() function
+        // and push the result on the undostack. This allows the command to prime itself on execution.
+        // For example: the delete command is generic until it is executed, then it will store the 
+        // character it has deleted so it can insert it again when it's undoCommand() is called.
         performCommand = function () { 
             // Some utility functions
             function insertChar(c){
@@ -125,8 +273,7 @@ function nl_jauco_writo($) {
             }
             var COMMANDS = {
 				// ** {{{insChar }}}**
-                // Appends a character to the current element.
-                // * {{{character:}}} is the character to append
+                // Appends {{{character}}} to the current element.
                 insChar: function ([character]) {
                     var command = {};
                     command.insert = insertChar;
@@ -141,8 +288,8 @@ function nl_jauco_writo($) {
                     };
                     return command;
                 },
-                // ** {{{setStyle }}}**
-                // Adds a class to the current paragraph div.
+                // ** {{{addClass }}}**
+                // Adds {{{className}}} to the current paragraph div.
                 addClass: function ([className]) {
                     var command = {};
                     command.className = className;
@@ -179,8 +326,6 @@ function nl_jauco_writo($) {
                             newLocation.before($("#cursor"));
                         }
                     }
-
-                    //if the newLocation exists
                     if ($("#cursor")[command.direction](command.moveFunc).length > 0) {
                         command.doCommand = function () {
                             this.moveCursor($("#cursor")[this.direction](this.moveFunc), this.direction);
@@ -202,7 +347,7 @@ function nl_jauco_writo($) {
                     }
                     return command;
                 },
-				// ** {{{ DeleteChar }}} **
+				// ** {{{ deleteChar }}} **
 				// Command that deletes the preceding element
                 deleteChar : function ([]) {
                     var command = {};
@@ -222,6 +367,7 @@ function nl_jauco_writo($) {
                     };
                     return command;
                 },
+                //**{{{rePerform}}}** rePerforms the following command {{{amount}}} times
                 rePerform : function ([amount]) {
                     var command = {};
                     command.amount = amount;
@@ -258,6 +404,7 @@ function nl_jauco_writo($) {
                     };
                     return command;
                 },
+                //**{{{insert}}}** inserts all the keypresses until <esc> is pressed. 
                 insert : function ([]) {
                     var command = {};
                     writo.setEditMode("insert");
@@ -270,7 +417,6 @@ function nl_jauco_writo($) {
                             return undefined;
                         }
                         //otherwise start handling the keypresses
-                        //Only handle characters for now
                         if (key.length === 1 || key === "return") {
                             executeCommand(performCommand("insChar", key), command.privateUndoStack);
                         }
@@ -279,6 +425,11 @@ function nl_jauco_writo($) {
                         }
                         return command.handler;
                     };
+                    //{{{doCommand}}} 
+                    // doesn't do anything (since all the keys have already been inserted by the handler)
+                    // but replaces itself with a doCommand that *does* reInsert all characters. This way the
+                    // first time you call doCommand nothing happens but all consecutive calls will reperform 
+                    // the command.
                     command.doCommand = function () {
                         command.undoCommand = function () {
                             for (var i = this.privateUndoStack.length - 1; i >= 0; i -= 1) {
@@ -299,13 +450,11 @@ function nl_jauco_writo($) {
             };
 			
 			// ** Returning the command objects **\\
-            // Ok, this will be the actual performCommand function as far as the rest
-            // of the code is concerned.
-            //
-			// Now that we've declared all possible commands, the following 
-			// statement actually returns one.
+            // This will be the actual performCommand function as far as the rest
+            // of the code is concerned. Now that we've declared all possible commands, the following 
+			// statements actually create and return one.
             return function (commandID) {
-                var argArray = Array.slice(arguments,1);//convert the arguments 'array' to a real Array and drop commandID
+                var argArray = Array.slice(arguments,1); //convert the arguments 'array' to a real Array and drop commandID
                 var cmd = COMMANDS[commandID](argArray);
                 if ("caption" in cmd){
                     $("#commandStatus").append(cmd.caption);
@@ -314,7 +463,11 @@ function nl_jauco_writo($) {
             };
         }();
 
-        var executeCommand = function(command, localUndoStack){
+        
+        //**{{{executeCommand}}}**
+        //This will call the {{{doCommand}}} on a command object and push the result
+        //on the undo stack.
+        executeCommand = function(command, localUndoStack){
             //A command is allowed to change itself upon being called and returning
             //a different object. The delete command uses this to implement its undo
             //function
@@ -327,45 +480,6 @@ function nl_jauco_writo($) {
             }
             else {
                 localUndoStack.push(command);
-            }
-        };
-        
-		// == User interaction ==
-		// Now that we have commands we need to use them. The following code is all about setting 
-		// modes, managing commands etc.
-
-		// ** The {{{getCommand}}} ** is in use when we are in "command" mode. Every 
-		// character key is bound to a command defined previously. The mapping is shown 
-		// at the end of the function.
-		//
-		// You can do basic macro scripting by typing a number before the command. For example:
-		// {{{j}}} will move the cursor up one line, {{{2j}}} will move the cursor up two lines.\\
-		// The {{{insertCommandHandler}}} defined later is actually a kind of specific command. So it can
-		// also be multiplied. Pressing {{{iw<esc>3}}} will result in {{{www}}} on the screen.
-        getCommand = function (key) {
-            if (key === 'u') {
-                return writo.doUndo;
-            }
-            else if (key === 'r') {
-                return writo.doRedo;
-            }
-            else if (key === "i") {
-                return performCommand("insert");
-            }
-            else if (key === "h") {
-                return performCommand("moveCursor", "prev", ".char");
-            }
-            else if (key === "b") {
-                return performCommand("addClass", "heading");
-            }
-            else if (key === "l") {
-                return performCommand("moveCursor", "next", ".char");
-            }
-            else if (key === "backspace") {
-                return performCommand("deleteChar");
-            }
-            else if (key.isInt()) {
-                return performCommand("rePerform", key);
             }
         };
         
@@ -393,110 +507,21 @@ function nl_jauco_writo($) {
                 $("body").addClass(newMode);
             }
         };
-
-        // **{{{keyHandler}}}** is a utility function to get the keypress info from an event object. It translates between the numeric
-		// code that the event object returns and a human readable string.
-        writo.keyHandler = function(){ //Closure, this is executed at the end.
-            var functionKeyMapping,
-                getKeyInfo,
-                commandBeingConstructed,
-                currentKeyHandler = [],
-                previousCommand;
-
-            var functionKeyMapping = {
-                8:   "backspace",
-                20:  "capslock",
-                46:  "del",
-                40:  "down",
-                35:  "end",
-                27:  "esc",
-                112: "f1",
-                113: "f2", 
-                114: "f3", 
-                115: "f4", 
-                116: "f5", 
-                117: "f6", 
-                118: "f7", 
-                119: "f8", 
-                120: "f9", 
-                121: "f10", 
-                122: "f11", 
-                123: "f12",
-                36:  "home", 
-                45:  "insert", 
-                37:  "left", 
-                144: "numlock", 
-                34:  "pagedown", 
-                33:  "pageup", 
-                19:  "pause", 
-                38:  "up", 
-                13:  "return", 
-                39:  "right",
-                145: "scroll", 
-                32:  "space", 
-                9:   "tab"
-            };
-            
-            var getKeyInfo = function(evt){
-                if (evt.keyCode === undefined || evt.keyCode === 0) {
-                    return String.fromCharCode(evt.charCode);
-                }
-                else {
-                    if (functionKeyMapping.hasOwnProperty(evt.keyCode)) {
-                        return functionKeyMapping[evt.keyCode];
-                    }
-                    else {
-                        throw ( new Error('UnknownKeyMapping'));
-                    }
-                }
-            }
-            return function (evt) {
-                var keyName,
-                    command;
-                try {
-                    keyName = getKeyInfo(evt);
-                    //check if we are starting the construction of a new command
-                    if (commandBeingConstructed === undefined){
-                        if (keyName=='.' && previousCommand.doCommand !== undefined){
-                            commandBeingConstructed = previousCommand;
-                        }
-                        else {
-                            //retrieve a command based on the key
-                            commandBeingConstructed = getCommand(keyName);
-                            //set globalhandler to the command's handler
-                            if (commandBeingConstructed.doCommand !== undefined){
-                                if (commandBeingConstructed !== undefined){
-                                    currentKeyHandler = commandBeingConstructed.handler;
-                                }
-                            }
-                            else {
-                                commandBeingConstructed();
-                                commandBeingConstructed = undefined;
-                            }
-                        }
-                    } else {
-                        //execute currentKeyhandler and assign it's result to itself
-                        currentKeyHandler = currentKeyHandler(keyName);
-                    }
-                    if (commandBeingConstructed !== undefined && currentKeyHandler === undefined){
-                        //execute "being constructed command"
-                        previousCommand = commandBeingConstructed;
-                        executeCommand(commandBeingConstructed);
-                        commandBeingConstructed = undefined;
-                        $("#commandStatus").html("");
-                    }
-                }
-                catch (e){
-                    if (currentKeyHandler == undefined){
-                        commandBeingConstructed = undefined;
-                    }
-                    doLog(e);
-                    return true;
-                }
-                return false;
-            };
-        }();
         
+        // **{{{DropUndoStackFromThisPointOnwards}}}** well... this will Drop the Undo Stack From This PointOnwards. You can specify the point to drop from if you want.
+        DropUndoStackFromThisPointOnwards = function(pointToDropFrom){
+            if (pointToDropFrom === undefined){
+                pointToDropFrom = currentUndoPointer;
+            }
+            if (pointToDropFrom !== undoStack.length) {
+                undoStack.splice(pointToDropFrom, undoStack.length - pointToDropFrom);
+            }
+        }
+        
+        // == function nl_jauco_writo($) ==
+        //From here on down is the public API
+        
+        //**{{{doUndo}}}** undo the last command
         writo.doUndo = function(){
             if (currentUndoPointer > 0) {
                 currentUndoPointer -= 1;
@@ -508,6 +533,7 @@ function nl_jauco_writo($) {
             }
         }
         
+        //**{{{doRedo}}}** redo the last command
         writo.doRedo = function(){
             if (currentUndoPointer < undoStack.length) {
                 undoStack[currentUndoPointer].doCommand();
@@ -519,13 +545,13 @@ function nl_jauco_writo($) {
             }
         }
         
+        //**{{{cleanDocument}}}** Throw away the DOM and the command history
         writo.cleanDocument = function(){
             DropUndoStackFromThisPointOnwards(0);
             $("#DocumentContainer")[0].innerHTML = "<div class='active paragraph'><span id='cursor'>|</span></div>";
         }
         
-        writo.giveName = function(){}
-        
+        //**{{{load}}}** load the document from localStorage
         writo.load = function(cmdArray){
             this.cleanDocument();
             try {
@@ -546,10 +572,12 @@ function nl_jauco_writo($) {
             }
         }
         
+        //**{{{writeCommands}}}** dump the current undoStacl
         writo.writeCommands = function(){
-            $("#DocumentContainer")[0].innerHTML = undoStack.toSource();
+            doLog(undoStack.toSource());
         }
         
+        //**{{{save}}}** serialize all commands and save them to localStorage
         writo.save = function(){
             var undoStackAsString = undoStack.toSource();
             doLog("saving "+undoStackAsString.length+" bytes");
@@ -557,25 +585,22 @@ function nl_jauco_writo($) {
             localStorage.currentUndoPointer = currentUndoPointer;
         }
         
+        
+        //**{{{reload}}}** save and load, mostly used to see if saving works properly
         writo.reload = function(){
             this.save();
             this.load();
         }
 
+        
+        //**{{{removeSaved}}}** Clean the document and remove the localStorage
         writo.removeSaved = function(){
             this.cleanDocument();
             delete localStorage.document;
             delete localStorage.currentUndoPointer;
         }
 
+        //And finally return the writo object
         return writo;
-    }();
-	// == The init code ==
-	// While perhaps not as convenient for the narrative. Scripting languages usually have their init code last.
-	// The following lines will set up the writohandler.
-    $(document).bind("keypress.WritoHandler", writoEditor.keyHandler);
-    writoEditor.setEditMode("command");
-    writoEditor.load();
-    window.nl_jauco_writo = writoEditor;
-    return writoEditor;
+    };
 }
