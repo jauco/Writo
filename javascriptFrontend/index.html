@@ -6,13 +6,40 @@
         <script type="application/javascript;version=1.8" src="js/jquery.js"></script>
         <script type="application/javascript;version=1.8" src="js/writo.js"></script>
         <script type="application/javascript;version=1.8">
-            //This will return an object containing the writo editor and bind the keyhandlers to that object
-            jQuery(nl_jauco_writo);
+            jQuery(document).ready(function() {
+                var writo = nl_jauco_writo(jQuery);
+                jQuery("#cleanLink").click(function(){writo.removeSaved()});
+            });
         </script>
     </head>
     <body>
         <div class="container">
-            <div class="span-12" id="DocumentContainer"></div>
+            <div class="span-12 prefix-3" id="DocumentContainer"></div>
+            <div class="span-8 prefix-1 last" id="tools">
+                <h4>Tools</h4>
+                <a href="#" class="button" id="cleanLink">Throw away the current document</a><br/>
+                <hr />
+            </div>
+            <div class="span-8 prefix-1 last" id="intro">
+                <div class="notice">
+                    <h4>Welcome!</h4>
+                    <p>This is a text editor written in javascript. It might be a 
+                    little bit hard to get started so here's a gentle introduction:
+                    <ol>
+                        <li>press the 'i' key on your keyboard.</li>
+                        <li>The box with the cursor should become orange/pink. This means the application is in 'insert' mode.</li>
+                        <li>type something</li>
+                        <li>You'll see that the text appears</li>
+                        <li>press the &lt;esc&gt; key to leave insert mode</li>
+                        <li>You can remove characters with the backspace key</li>
+                        <li>You can press 'u' and 'r' while not in insert mode to (u)ndo and (r)edo the last commands</li>
+                        <li>pressing 'b' while not in insert mode will turn a paragraph into a heading</li>
+                        <li>Try pressing a number before a command, for example: 5&lt;backspace&gt;</li>
+                        <li>this also works for insert: 5iYeey! &lt;esc&gt;</li>
+                        <li>If you leave this page and come back later it will still be exactly the same. You can still undo and redo. Even if you turned of your computer in the meantime!</li>
+                    </ol>
+                </ol>
+            </div>
         </div>
     </body>
 </html>
