@@ -12,7 +12,8 @@
                     esc:27,
                     leftCursor: 104,
                     rightCursor: 108,
-                    backspace: 8
+                    backspace: 8,
+                    'return':13
                 }
                 var writo = nl_jauco_writo($);
                 
@@ -35,19 +36,18 @@
                 // The following tests verify that manipulating a certain series of knobs will 
                 // # have the desired effect
                 // # will always have this effect even ten releases later.
-                test("Functional Tests", function() {
-
+                test("Functional Tests: Document should be empty except for cursor", function() {
                     same(
                         "|",
                         $("#DocumentContainer").text(),
                         "Test if document is empty, except for cursor"
                     );
-
-                    //"Pressing undo when nothing is done yet, should gracefully fail, by doing nothing"
+                });
+                test("Functional Tests: Pressing undo/redo when nothing is done yet, should gracefully fail, by doing nothing", function() {
                     key(doc, "u");
-                    //"Pressing redo when nothing is done yet, should gracefully fail, by doing nothing"
                     key(doc, "r");//insert mode
-                    
+                });
+                test("Functional Tests: basic mode switching", function() {
                     key(doc, "i");//insert mode
                     ok(
                         $("body").hasClass("insert"), 
@@ -64,6 +64,8 @@
                         "|",
                         "Switching shouldn't change the document"
                     );
+                });
+                test("Functional Tests: basic inserting", function() {
                     key(doc, "i");//insert mode
                     key(doc, "t");
                     key(doc, "e");
@@ -75,6 +77,8 @@
                         "test|",
                         "Adding text works"
                     );
+                });
+                test("Functional Tests: basic undo/redo", function() {
                     key(doc, "u");//undo
                     same(
                         $("#DocumentContainer").text(),
@@ -87,12 +91,16 @@
                         "test|",
                         "Redoing redo's the full command"
                     );
+                });
+                test("Functional Tests: deleting", function() {
                     key(doc, keys.backspace);
                     same(
                         $("#DocumentContainer").text(),
                         "tes|",
                         "deleting works"
                     );
+                });
+                test("Functional Tests: reperforming", function() {
                     key(doc, "2");
                     key(doc, keys.backspace);
                     same(
@@ -121,54 +129,8 @@
                         "tes|",
                         "Undoing undo's the double insert"
                     );
-                    var orig = $("#DocumentContainer")[0].innerHTML;
-                    writo.reload();
-                    same(
-                        $("#DocumentContainer")[0].innerHTML,
-                        orig,
-                        "reloading works"
-                    );
-                    /*
-                    key(doc, "h");
-                    key(doc, "1");
-                    same(
-                        "ter|ug",
-                        $("#DocumentContainer").text(),
-                        "Doing a combo command, resulting in two left presses"
-                    );
-                    
-                    key(doc, "l");
-                    same(
-                        "teru|g",
-                        $("#DocumentContainer").text(),
-                        "Pressing the right cursor once"
-                    );
-
-                    key(doc, "l");
-                    key(doc, "l");
-                    key(doc, "i");//insert mode
-                    key(doc, " ");
-                    key(doc, keys.esc);
-                    same(
-                        "terug |",
-                        $("#DocumentContainer").text(),
-                        "Walking past the end of the text fails gracefully"
-                    );
-                    key(doc, "x");
-                    same(
-                        "terug|",
-                        $("#DocumentContainer").text(),
-                        "Characters can be deleted"
-                    );
-
-                    key(doc, "u");
-                    same(
-                        "terug |",
-                        $("#DocumentContainer").text(),
-                        "Delete can be undone"
-                    );
-
-                    
+                });
+                test("Functional Tests: applying style", function() {
                     key(doc, "b");
                     ok(
                         $("#DocumentContainer > div").hasClass("heading"), 
@@ -180,56 +142,299 @@
                         !$("#DocumentContainer > div").hasClass("heading"), 
                         "Setting heading can be undone"
                     );
-
-                    key(doc, "x");
-                    key(doc, "1");
-                    same(
-                        "teru|",
-                        $("#DocumentContainer").text(),
-                        "Reperform the last command by pressing the 1"
-                    );
-                    
-                    key(doc, "x");
-                    key(doc, "2");
-                    key(doc, "u");
-                    same(
-                        "ter|",
-                        $("#DocumentContainer").text(),
-                        "Multiplied commands appear as one command on the undo stack"
-                    );
-
-                    
-                    key(doc, "h");
+                });
+                test("Functional Tests: insert and undo end of sentence", function(){
+                    orig = $("#DocumentContainer")[0].innerHTML
                     key(doc, "i");
-                    key(doc, "x");
-                    key(doc, keys.esc);
+                    key(doc, "h");
+                    key(doc, "a");
+                    key(doc, ".");
                     key(doc, "l");
+                    key(doc, "l");
+                    key(doc, "o");
+                    key(doc, keys.esc);
                     key(doc, "u");
-                    key(doc, "u");
-                    key(doc, "u");
-                    
                     same(
-                        "ter|",
-                        $("#DocumentContainer").text(),
-                        "Test if undo works when navigating"
+                        $("#DocumentContainer")[0].innerHTML,
+                        orig,
+                        "You should be able to undo end of sentence markers"
                     );
-
-                    writo.giveName("foo");
-                    writo.cleanDocument();
+                });
+                test("Functional Tests: insert and undo end of paragraph", function(){
+                    orig = $("#DocumentContainer")[0].innerHTML
+                    key(doc, "i");
+                    key(doc, "h");
+                    key(doc, "a");
+                    key(doc, keys['return']);
+                    key(doc, "l");
+                    key(doc, "l");
+                    key(doc, "o");
+                    key(doc, keys.esc);
+                    key(doc, "u");
                     same(
-                        "|",
-                        $("#DocumentContainer").text(),
-                        "CleanDocument should clean the content"
+                        $("#DocumentContainer")[0].innerHTML,
+                        orig,
+                        "You should be able to undo a paragraph marker"
                     );
-                    
+                });
+                test("Functional Tests: insert and undo end of paragraph & sentence", function(){
+                    orig = $("#DocumentContainer")[0].innerHTML
+                    key(doc, "i");
+                    key(doc, "h");
+                    key(doc, "a");
+                    key(doc, keys['return']);
+                    key(doc, ".");
+                    key(doc, "l");
+                    key(doc, "o");
+                    key(doc, keys.esc);
+                    key(doc, "u");
+                    same(
+                        $("#DocumentContainer")[0].innerHTML,
+                        orig,
+                        "You should be able to undo a end of sentence marker followed by a paragraph marker"
+                    );
+                });
+                test("Functional Tests: test whether all functions work when loading from disc", function() {
+                    var orig = $("#DocumentContainer")[0].innerHTML;
                     writo.reload();
                     same(
-                        "ter|",
-                        $("#DocumentContainer").text(),
-                        "Loading the document from string should result in the same document"
+                        $("#DocumentContainer")[0].innerHTML,
+                        orig,
+                        "reloading works"
                     );
-                    */
                 });
+                test("Functional Tests: delete end of sentence", function(){
+                    orig = $("#DocumentContainer")[0].innerHTML = "<div class=\"paragraph active\">a<p>.</p>b<span id=\"cursor\">|</span></div>";
+                    key(doc, keys.backspace);
+                    key(doc, keys.backspace);
+                    key(doc, keys.backspace);
+                    key(doc, "u");
+                    key(doc, "u");
+                    key(doc, "u");
+                    same(
+                        $("#DocumentContainer")[0].innerHTML,
+                        orig,
+                        "You should be able to undo a end of sentence marker followed by a paragraph marker"
+                    );
+                });
+                test("Functional Tests: delete and undo over paragraph", function(){
+                    orig = $("#DocumentContainer")[0].innerHTML = "<div class=\"paragraph\">ab</div><div class=\"paragraph active\">c<span id=\"cursor\">|</span></div>";
+                    key(doc, keys.backspace);
+                    key(doc, keys.backspace);
+                    key(doc, keys.backspace);
+                    key(doc, "u");
+                    key(doc, "u");
+                    key(doc, "u");
+                    same(
+                        $("#DocumentContainer")[0].innerHTML,
+                        orig,
+                        "You should be able to undo a end of sentence marker followed by a paragraph marker"
+                    );
+                });
+                test("Functional Tests: move cursor left through character sequence", function(){
+                    $("#DocumentContainer")[0].innerHTML = "<div class=\"paragraph\">abcd<span id=\"cursor\">|</span></div>";
+                    key(doc, "h");
+                    key(doc, "h");
+                    same(
+                        $("#DocumentContainer")[0].innerHTML,
+                        "<div class=\"paragraph\">ab<span id=\"cursor\">|</span>cd</div>",
+                        "You should be able to move the cursor left through a character stream"
+                    );
+                });
+                test("Functional Tests: move cursor right through character sequence", function(){
+                    $("#DocumentContainer")[0].innerHTML = "<div class=\"paragraph\">a<span id=\"cursor\">|</span>bcd</div>";
+                    key(doc, "l");
+                    same(
+                        $("#DocumentContainer")[0].innerHTML,
+                        "<div class=\"paragraph\">ab<span id=\"cursor\">|</span>cd</div>",
+                        "You should be able to move the cursor left through a character stream"
+                    );
+                });
+                test("Functional Tests: move cursor left through sentence marker", function(){
+                    $("#DocumentContainer")[0].innerHTML = "<div class=\"paragraph\">abc<p>.</p>d<span id=\"cursor\">|</span></div>";
+                    key(doc, "h");
+                    key(doc, "h");
+                    key(doc, "h");
+                    same(
+                        $("#DocumentContainer")[0].innerHTML,
+                        "<div class=\"paragraph\">ab<span id=\"cursor\">|</span>c<p>.</p>d</div>",
+                        "You should be able to move the cursor left through a character stream"
+                    );
+                });
+                test("Functional Tests: move cursor right through sentence marker", function(){
+                    $("#DocumentContainer")[0].innerHTML = "<div class=\"paragraph\">a<span id=\"cursor\">|</span>b<p>.</p>cd</div>";
+                    key(doc, "l");
+                    key(doc, "l");
+                    key(doc, "l");
+                    same(
+                        $("#DocumentContainer")[0].innerHTML,
+                        "<div class=\"paragraph\">ab<p>.</p>c<span id=\"cursor\">|</span>d</div>",
+                        "You should be able to move the cursor left through a character stream"
+                    );
+                });
+                test("Functional Tests: move cursor left and back again", function(){
+                    var orig = $("#DocumentContainer")[0].innerHTML = "<div class=\"paragraph\">ab<p>.</p>cd</div><div class=\"paragraph active\">ef<span id=\"cursor\">|</span></div>";
+                    key(doc, "7");
+                    key(doc, "h");
+                    same(
+                        $("#DocumentContainer")[0].innerHTML,
+                        "<div class=\"paragraph active\">a<span id=\"cursor\">|</span>b<p>.</p>cd</div><div class=\"paragraph\">ef</div>",
+                        "You should be able to move the cursor across paragraphs and line endings, right in the middle of a character stream"
+                    );
+                    key(doc, "7");
+                    key(doc, "l");
+                    same(
+                        $("#DocumentContainer")[0].innerHTML,
+                        orig,
+                        "You should be able to move the cursor across paragraphs and line endings, right in the middle of a character stream"
+                    );
+                });
+                test("Functional Tests: Walking past the end of the text fails gracefully", function(){
+                    writo.document.clean();
+                    key(doc, "i");
+                    key(doc, "a");
+                    key(doc, "b");
+                    key(doc, "c");
+                    key(doc, keys.esc);
+                    key(doc, "i");
+                    key(doc, "d");
+                    key(doc, keys.esc);
+                    key(doc, "l");
+                    key(doc, "l");
+                    key(doc, "h");
+                    key(doc, "h");
+                    key(doc, "u");
+                    same(
+                        $("#DocumentContainer")[0].innerHTML,
+                        "<div class=\"paragraph active\">abc<span id=\"cursor\">|</span></div>",
+                        "You should be able to move the cursor across paragraphs and line endings, right in the middle of a character stream"
+                    );
+                });
+                test("Test if undo works when navigating", function(){
+                    writo.document.clean();
+                    key(doc, "i");
+                    key(doc, "a");
+                    key(doc, "b");
+                    key(doc, "c");
+                    key(doc, "d");
+                    key(doc, keys.esc);
+                    key(doc, "h");
+                    key(doc, "h");
+                    key(doc, keys.backspace);
+                    key(doc, "l");
+                    key(doc, "l");
+                    key(doc, "u");
+                    same(
+                        $("#DocumentContainer")[0].innerHTML,
+                        "<div class=\"paragraph active\">ab<span id=\"cursor\">|</span>cd</div>",
+                        "You should be able to move the cursor across paragraphs and line endings, right in the middle of a character stream"
+                    );
+                });
+
+                test("document: basic insert", function() {
+                    writo.document.clean();
+                    writo.document.insertCharBeforeCursor('a');
+                    same(
+                        $("#DocumentContainer").text(),
+                        "a|",
+                        "basic insert should insert 'a' before the cursor"
+                    );
+                });
+
+                test("document: insert sentence ender", function() {
+                    writo.document.clean();
+                    writo.document.insertCharBeforeCursor('a');
+                    writo.document.insertCharBeforeCursor('.');
+                    writo.document.insertCharBeforeCursor('b');
+                    same(
+                        $("#DocumentContainer").text(),
+                        "a.b|",
+                        "'.' should insert a '.' character"
+                    );
+                    same(
+                        $("#DocumentContainer").html(),
+                        "<div class=\"paragraph active\">a<p>.</p>b<span id=\"cursor\">|</span></div>",
+                        "'.' character should be wrapped in <p>"
+                    );
+                });
+                
+                test("document: start new paragraph", function() {
+                    writo.document.clean();
+                    writo.document.insertCharBeforeCursor('a');
+                    writo.document.insertCharBeforeCursor('return');
+                    writo.document.insertCharBeforeCursor('b');
+                    same(
+                        $("#DocumentContainer").html(),
+                        "<div class=\"paragraph\">a</div><div class=\"paragraph active\">b<span id=\"cursor\">|</span></div>",
+                        "'return shoyld create a new paragraph"
+                    );
+                });
+                
+                test("document: basic delete", function() {
+                    $("#DocumentContainer").html("<div class=\"paragraph\">a<span id=\"cursor\">|</span></div>");
+                    var c = writo.document.deleteCharBeforeCursor();
+                    same(
+                        $("#DocumentContainer").text(),
+                        "|",
+                        "basic delete should delete char before the cursor"
+                    );
+                    same(
+                        c,
+                        "a",
+                        "basic delete should return the deleted character"
+                    );
+                });
+
+                test("document: delete sentence ender", function() {
+                    $("#DocumentContainer").html("<div class=\"active paragraph\">ab<p>.</p>c<span id=\"cursor\">|</span></div>");
+                    writo.document.deleteCharBeforeCursor();
+                    writo.document.deleteCharBeforeCursor();
+                    writo.document.deleteCharBeforeCursor();
+                    same(
+                        $("#DocumentContainer").html(),
+                        "<div class=\"active paragraph\">a<span id=\"cursor\">|</span></div>",
+                        "delete should walk over sentence ender"
+                    );
+                });
+                
+                test("document: delete over paragraph", function() {
+                    $("#DocumentContainer").html("<div class=\"paragraph\">ab</div><div class=\"paragraph active\">c<span id=\"cursor\">|</span></div>");
+                    writo.document.deleteCharBeforeCursor();
+                    writo.document.deleteCharBeforeCursor();
+                    writo.document.deleteCharBeforeCursor();
+                    same(
+                        $("#DocumentContainer").html(),
+                        "<div class=\"paragraph active\">a<span id=\"cursor\">|</span></div>",
+                        "delete should walk over paragraph ends"
+                    );
+                });
+
+                test("document: delete sentence ender followed by paragraph ", function() {
+                    $("#DocumentContainer").html("<div class=\"paragraph\">ab<p>.</p></div><div class=\"paragraph active\">c<span id=\"cursor\">|</span></div>");
+                    writo.document.deleteCharBeforeCursor();
+                    writo.document.deleteCharBeforeCursor();
+                    writo.document.deleteCharBeforeCursor();
+                    writo.document.deleteCharBeforeCursor();
+                    same(
+                        $("#DocumentContainer").html(),
+                        "<div class=\"paragraph active\">a<span id=\"cursor\">|</span></div>",
+                        "delete should walk over paragraph ends"
+                    );
+                });
+
+                test("document: delete over paragraph followed by sentence ender", function() {
+                    $("#DocumentContainer").html("<div class=\"paragraph\">ab</div><div class=\"paragraph active\"><p>.</p>c<span id=\"cursor\">|</span></div>");
+                    writo.document.deleteCharBeforeCursor();
+                    writo.document.deleteCharBeforeCursor();
+                    writo.document.deleteCharBeforeCursor();
+                    writo.document.deleteCharBeforeCursor();
+                    same(
+                        $("#DocumentContainer").html(),
+                        "<div class=\"paragraph active\">a<span id=\"cursor\">|</span></div>",
+                        "delete should walk over paragraph ends"
+                    );
+                });
+         
             });
         </script>
     </head>

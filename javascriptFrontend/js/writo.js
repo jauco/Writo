@@ -76,6 +76,8 @@ function nl_jauco_writo($) {
             undoStack = [],
             //**{{{currentUndoPointer}}}** points to the current place in the undoStack
             currentUndoPointer = 0,
+            //**{{{}}}**This is a representation of the current document that provides some functions for manipulating it.
+            curDoc = {},
             //**{{{}}}**These functions are described at their implementation
             
             performCommand,
@@ -83,6 +85,7 @@ function nl_jauco_writo($) {
             insertCommandHandler,
             DropUndoStackFromThisPointOnwards,
             executeCommand,
+            moveCursor,
             getCommand;
 
 		// == Command objects ==
@@ -214,13 +217,13 @@ function nl_jauco_writo($) {
                 return performCommand("insert");
             }
             else if (key === "h") {
-                return performCommand("moveCursor", "prev", ".char");
+                return performCommand("moveCursor", true);
             }
             else if (key === "b") {
                 return performCommand("addClass", "heading");
             }
             else if (key === "l") {
-                return performCommand("moveCursor", "next", ".char");
+                return performCommand("moveCursor", false);
             }
             else if (key === "backspace") {
                 return performCommand("deleteChar");
@@ -229,7 +232,166 @@ function nl_jauco_writo($) {
                 return performCommand("rePerform", key);
             }
         };
-        
+
+        var COMMANDS = {
+            // ** {{{insChar }}}**
+            // Appends {{{character}}} to the current element.
+            insChar: function ([character]) {
+                var command = {};
+                command.insert = curDoc.insertCharBeforeCursor;
+                command.backspace = curDoc.deleteCharBeforeCursor;
+                command.character = character;
+                command.doCommand = function () {
+                    this.insert(this.character);
+                    return this;
+                };
+                command.undoCommand = function () {
+                    this.backspace();
+                };
+                return command;
+            },
+            // ** {{{addClass }}}**
+            // Adds {{{className}}} to the current paragraph div.
+            addClass: function ([className]) {
+                var command = {};
+                command.className = className;
+                command.doCommand = function () {
+                    $(".active").addClass(this.className);
+                    return this;
+                };
+                command.undoCommand = function () {
+                    $(".active").removeClass(this.className);
+                };
+                return command;
+            },  
+            // ** {{{ moveCursor }}} **
+            // Returns a function that will move the cursor a specific step in a 
+              // specific direction. Or just an empty dummy if the target location 
+              // doesn't exist.
+              // * {{{moveFunc: }}} a classname or other jQuery expression to determine how far the cursor moves
+              // * {{{direction: }}} "prev" or "next"
+            moveCursor : function ([goLeft]) {
+                var command = {};
+                command.caption = "move";
+                command.direction = goLeft;
+                command.skipOnUndostack = true;
+                command.doCommand = function(){
+                    var result = moveCursor(goLeft, false);
+                    if (result === undefined){
+                        this.doCommand = function(){return this};
+                        this.undoCommand = function(){};
+                    }
+                    else {
+                        command.undoCommand = function(){
+                            moveCursor(!this.direction, false);
+                        };
+                    }
+                    return this;
+                };
+                return command;
+            },
+            // ** {{{ deleteChar }}} **
+            // Command that deletes the preceding element
+            deleteChar : function ([]) {
+                var command = {};
+                command.caption = "delete "
+                command.doCommand = function () {
+                    var finalizedCommand = {};
+                    finalizedCommand.insert = curDoc.insertCharBeforeCursor;
+                    finalizedCommand.backspace = curDoc.deleteCharBeforeCursor;
+                    finalizedCommand.deletedElement = finalizedCommand.backspace();
+                    finalizedCommand.doCommand = function () {
+                        this.backspace();
+                    }
+                    finalizedCommand.undoCommand = function () {
+                        this.insert(this.deletedElement);
+                    };
+                    return finalizedCommand;
+                };
+                return command;
+            },
+            //**{{{rePerform}}}** rePerforms the following command {{{amount}}} times
+            rePerform : function ([amount]) {
+                var command = {};
+                command.amount = amount;
+                command.caption = amount+" times ";
+                command.doCommand = function () {
+                    finalizedCommand = {};
+                    finalizedCommand.privateUndoStack = [];
+                    finalizedCommand.command = command.command;
+                    finalizedCommand.amount = command.amount;
+                    for (var i = 0; i < command.amount; i += 1) {
+                        executeCommand(command.command, finalizedCommand.privateUndoStack);
+                    }
+                    finalizedCommand.doCommand = function(){
+                        for (var i = 0; i < this.amount; i += 1) {
+                           this.privateUndoStack[i].doCommand();
+                        }
+                    }
+                    finalizedCommand.undoCommand = function () {
+                        for (var i = this.amount - 1; i >= 0; i -= 1) {
+                            this.privateUndoStack[i].undoCommand();
+                        }
+                    };
+                    return finalizedCommand;
+                };
+                command.handler = function(key){
+                    if (key.isInt()){
+                        command.amount = command.amount+""+key;
+                        return command.handler;
+                    }
+                    else {
+                        command.command = getCommand(key);
+                        return command.command.handler;
+                    }
+                };
+                return command;
+            },
+            //**{{{insert}}}** inserts all the keypresses until <esc> is pressed. 
+            insert : function ([]) {
+                var command = {};
+                writo.setEditMode("insert");
+                command.privateUndoStack = [];
+                command.caption = "Insert ";
+                command.handler = function(key){
+                    //Abort when we receive an <esc>
+                    if (key === 'esc') {
+                        writo.setEditMode("command");
+                        return undefined;
+                    }
+                    //otherwise start handling the keypresses
+                    if (key.length === 1 || key === "return") {
+                        executeCommand(performCommand("insChar", key), command.privateUndoStack);
+                    }
+                    else if (key === "backspace"){
+                        executeCommand(performCommand("deleteChar"), command.privateUndoStack);
+                    }
+                    return command.handler;
+                };
+                //{{{doCommand}}} 
+                // doesn't do anything (since all the keys have already been inserted by the handler)
+                // but replaces itself with a doCommand that *does* reInsert all characters. This way the
+                // first time you call doCommand nothing happens but all consecutive calls will reperform 
+                // the command.
+                command.doCommand = function () {
+                    command.undoCommand = function () {
+                        for (var i = this.privateUndoStack.length - 1; i >= 0; i -= 1) {
+                            this.privateUndoStack[i].undoCommand();
+                        }
+                    };
+                    command.doCommand = function () {
+                        for (var i = 0; i < this.privateUndoStack.length; i += 1) {
+                            this.privateUndoStack[i].doCommand();
+                        }
+                        return this;
+                    };
+                    delete command.handler;
+                    return command;
+                };
+                return command;
+            }
+        };
+            
         // **{{{performCommand }}}** The function performCommand creates command objects.
         // Each command has a {{{doCommand()}}}, {{{undoCommand()}}} and optional {{{handler()}}} function.
         // This function will return a command, and executeCommand will call their doCommand() function
@@ -237,226 +399,6 @@ function nl_jauco_writo($) {
         // For example: the delete command is generic until it is executed, then it will store the 
         // character it has deleted so it can insert it again when it's undoCommand() is called.
         performCommand = function () { 
-            // Some utility functions
-            function insertChar(c){
-                var curPar = $("#cursor").parent();
-                
-                if (c === 'return'){
-                    var newPar = $("<div class='paragraph active'></div>");
-                    curPar.after(newPar);
-                    curPar.removeClass("active");
-                    newPar.append($("#cursor"));
-                }
-                else if ('.!?'.has(c)){//insert a sentence marker when ending a sentence.
-                    $("#cursor").before($("<p>"+c+"</p>"));
-                }
-                else {
-                    if ($("#cursor")[0].previousSibling == null || $("#cursor")[0].previousSibling.nodeType != 3){
-                        $("#cursor").before(c);
-                    }
-                    else {
-                        $("#cursor")[0].previousSibling.textContent += c;
-                    }
-                }
-            }
-            function backspace(){
-                var prevWord = $("#cursor")[0].previousSibling;
-                if (prevWord === null || prevWord.length === 0 || prevWord.nodeType != 3){
-                    if ($("#cursor").parent().prevAll('.paragraph').length > 0){
-                        var curPar = $("#cursor").parent();
-                        $("#cursor").parent().prev().addClass("active");
-                        $("#cursor").parent().prev().append($("#cursor"));
-                        curPar.remove();
-                    }
-                    if ($("#cursor").prev()[0].nodeName == "P"){
-                        $(prevWord).remove();
-                        $("#cursor").prev().remove();
-                    }
-                }
-                else {
-                    var c = prevWord.textContent.slice(-1)
-                    prevWord.textContent = prevWord.textContent.slice(0,-1)
-                }
-                return c;
-            }
-            var COMMANDS = {
-				// ** {{{insChar }}}**
-                // Appends {{{character}}} to the current element.
-                insChar: function ([character]) {
-                    var command = {};
-                    command.insert = insertChar;
-                    command.backspace = backspace;
-                    command.character = character;
-                    command.doCommand = function () {
-                        this.insert(this.character);
-                        return this;
-                    };
-                    command.undoCommand = function () {
-                        this.backspace();
-                    };
-                    return command;
-                },
-                // ** {{{addClass }}}**
-                // Adds {{{className}}} to the current paragraph div.
-                addClass: function ([className]) {
-                    var command = {};
-                    command.className = className;
-                    command.doCommand = function () {
-                        $(".active").addClass(this.className);
-                        return this;
-                    };
-                    command.undoCommand = function () {
-                        $(".active").removeClass(this.className);
-                    };
-                    return command;
-                },  
-                // ** {{{ moveCursor }}} **
-				// Returns a function that will move the cursor a specific step in a 
-                  // specific direction. Or just an empty dummy if the target location 
-                  // doesn't exist.
-                  // * {{{moveFunc: }}} a classname or other jQuery expression to determine how far the cursor moves
-                  // * {{{direction: }}} "prev" or "next"
-                moveCursor : function ([direction, moveFunc]) {
-                    var command = {};
-                    command.direction = direction;
-                    command.moveFunc = moveFunc;
-                    
-                    command.moveCursor= function(newLocation, direction) {
-                        if (! newLocation.closest("div.paragraph").hasClass("active")) {
-                            $("#cursor").closest("div.paragraph").removeClass("active");
-                            newLocation.closest("div.paragraph").addClass("active");
-                        }
-                        
-                        if (direction === "next") {
-                            newLocation.after($("#cursor"));
-                        }
-                        else {
-                            newLocation.before($("#cursor"));
-                        }
-                    }
-                    if ($("#cursor")[command.direction](command.moveFunc).length > 0) {
-                        command.doCommand = function () {
-                            this.moveCursor($("#cursor")[this.direction](this.moveFunc), this.direction);
-                        };
-                        command.undoCommand = function () {
-                            var undoDirection;
-                            if (this.direction=="prev"){
-                                undoDirection = "next";
-                            }
-                            else {
-                                undoDirection = "prev";
-                            }
-                            this.moveCursor($("#cursor")[undoDirection](this.moveFunc), undoDirection);
-                        };
-                    }
-                    else {
-                        command.doCommand = function () {};
-                        command.undoCommand = function () {};
-                    }
-                    return command;
-                },
-				// ** {{{ deleteChar }}} **
-				// Command that deletes the preceding element
-                deleteChar : function ([]) {
-                    var command = {};
-                    command.caption = "delete "
-                    command.doCommand = function () {
-                        var finalizedCommand = {};
-                        finalizedCommand.insert = insertChar;
-                        finalizedCommand.backspace = backspace;
-                        finalizedCommand.deletedElement = backspace();
-                        finalizedCommand.doCommand = function () {
-                            this.backspace();
-                        }
-                        finalizedCommand.undoCommand = function () {
-                            this.insert(this.deletedElement);
-                        };
-                        return finalizedCommand;
-                    };
-                    return command;
-                },
-                //**{{{rePerform}}}** rePerforms the following command {{{amount}}} times
-                rePerform : function ([amount]) {
-                    var command = {};
-                    command.amount = amount;
-                    command.caption = amount+" times ";
-                    command.doCommand = function () {
-                        finalizedCommand = {};
-                        finalizedCommand.privateUndoStack = [];
-                        finalizedCommand.command = command.command;
-                        finalizedCommand.amount = command.amount;
-                        for (var i = 0; i < command.amount; i += 1) {
-                            executeCommand(command.command, finalizedCommand.privateUndoStack);
-                        }
-                        finalizedCommand.doCommand = function(){
-                            for (var i = 0; i < this.amount; i += 1) {
-                               this.privateUndoStack[i].doCommand();
-                            }
-                        }
-                        finalizedCommand.undoCommand = function () {
-                            for (var i = this.amount - 1; i >= 0; i -= 1) {
-                                this.privateUndoStack[i].undoCommand();
-                            }
-                        };
-                        return finalizedCommand;
-                    };
-                    command.handler = function(key){
-                        if (key.isInt()){
-                            command.amount = command.amount+""+key;
-                            return command.handler;
-                        }
-                        else {
-                            command.command = getCommand(key);
-                            return command.command.handler;
-                        }
-                    };
-                    return command;
-                },
-                //**{{{insert}}}** inserts all the keypresses until <esc> is pressed. 
-                insert : function ([]) {
-                    var command = {};
-                    writo.setEditMode("insert");
-                    command.privateUndoStack = [];
-                    command.caption = "Insert ";
-                    command.handler = function(key){
-                        //Abort when we receive an <esc>
-                        if (key === 'esc') {
-                            writo.setEditMode("command");
-                            return undefined;
-                        }
-                        //otherwise start handling the keypresses
-                        if (key.length === 1 || key === "return") {
-                            executeCommand(performCommand("insChar", key), command.privateUndoStack);
-                        }
-                        else if (key === "backspace"){
-                            executeCommand(performCommand("deleteChar"), command.privateUndoStack);
-                        }
-                        return command.handler;
-                    };
-                    //{{{doCommand}}} 
-                    // doesn't do anything (since all the keys have already been inserted by the handler)
-                    // but replaces itself with a doCommand that *does* reInsert all characters. This way the
-                    // first time you call doCommand nothing happens but all consecutive calls will reperform 
-                    // the command.
-                    command.doCommand = function () {
-                        command.undoCommand = function () {
-                            for (var i = this.privateUndoStack.length - 1; i >= 0; i -= 1) {
-                                this.privateUndoStack[i].undoCommand();
-                            }
-                        };
-                        command.doCommand = function () {
-                            for (var i = 0; i < this.privateUndoStack.length; i += 1) {
-                                this.privateUndoStack[i].doCommand();
-                            }
-                            return this;
-                        };
-                        delete command.handler;
-                        return command;
-                    };
-                    return command;
-                }
-            };
-			
 			// ** Returning the command objects **\\
             // This will be the actual performCommand function as far as the rest
             // of the code is concerned. Now that we've declared all possible commands, the following 
@@ -470,7 +412,6 @@ function nl_jauco_writo($) {
                 return cmd; 
             };
         }();
-
         
         //**{{{executeCommand}}}**
         //This will call the {{{doCommand}}} on a command object and push the result
@@ -532,8 +473,12 @@ function nl_jauco_writo($) {
         //**{{{doUndo}}}** undo the last command
         writo.doUndo = function(){
             if (currentUndoPointer > 0) {
-                currentUndoPointer -= 1;
-                undoStack[currentUndoPointer].undoCommand();
+                var continueUndoing;
+                do {
+                    currentUndoPointer -= 1;
+                    continueUndoing = undoStack[currentUndoPointer].skipOnUndostack;
+                    undoStack[currentUndoPointer].undoCommand();
+                } while (continueUndoing && currentUndoPointer > 0);
                 writo.save();
             }
             else {
@@ -544,8 +489,12 @@ function nl_jauco_writo($) {
         //**{{{doRedo}}}** redo the last command
         writo.doRedo = function(){
             if (currentUndoPointer < undoStack.length) {
-                undoStack[currentUndoPointer].doCommand();
-                currentUndoPointer += 1;
+                var continueRedoing;
+                do {
+                    continueRedoing = undoStack[currentUndoPointer].skipOnUndostack;
+                    undoStack[currentUndoPointer].doCommand();
+                    currentUndoPointer += 1;
+                } while (continueRedoing && currentUndoPointer < undoStack.length);
                 writo.save();
             }
             else {
@@ -553,15 +502,15 @@ function nl_jauco_writo($) {
             }
         }
         
-        //**{{{cleanDocument}}}** Throw away the DOM and the command history
-        writo.cleanDocument = function(){
+        //**{{{clean}}}** Throw away the DOM and the command history
+        curDoc.clean = function(){
             DropUndoStackFromThisPointOnwards(0);
-            $("#DocumentContainer")[0].innerHTML = "<div class='active paragraph'><span id='cursor'>|</span></div>";
+            $("#DocumentContainer")[0].innerHTML = "<div class='paragraph active'><span id='cursor'>|</span></div>";
         }
         
         //**{{{load}}}** load the document from localStorage
         writo.load = function(cmdArray){
-            this.cleanDocument();
+            curDoc.clean();
             try {
                 if ("document" in localStorage && "currentUndoPointer" in localStorage){
                     doLog("loading");
@@ -576,7 +525,7 @@ function nl_jauco_writo($) {
             }
             catch(e){
                 doLog(e);
-                this.cleanDocument();
+                curDoc.clean();
             }
         }
         
@@ -603,11 +552,182 @@ function nl_jauco_writo($) {
         
         //**{{{removeSaved}}}** Clean the document and remove the localStorage
         writo.removeSaved = function(){
-            this.cleanDocument();
+            curDoc.clean();
             delete localStorage.document;
             delete localStorage.currentUndoPointer;
         }
 
+        curDoc.getCursor = function(){
+            return $('#cursor');
+        }
+
+        //get the node next to this one, might be a textnode, or a sentence marker, or null if there is no char
+        var getNodeNextToCursor = function(beforeCursor, doRemove){
+            var cursor = curDoc.getCursor();
+            var sibling;
+            if (beforeCursor){
+                sibling = cursor[0].previousSibling;
+                if (sibling == null){
+                    return sibling;
+                }
+                if (sibling.nodeType == 3){ //textNode
+                    var c = sibling.textContent.slice(-1);
+                    if (doRemove){
+                        sibling.textContent = sibling.textContent.slice(0,-1);
+                        if (sibling.textContent.length === 0){
+                            $(sibling).remove(); //cleanup empty textNodes
+                        }
+                    }
+                    return $(document.createTextNode(c));
+                }
+                else if (sibling.nodeName == 'P'){ //sentenceMarker
+                    if (doRemove){
+                        cursor.prev().remove();
+                    }
+                    return $(sibling);
+                }
+            }
+            else {
+                sibling = cursor[0].nextSibling;
+                if (sibling == null){
+                    return sibling;
+                }
+                if (sibling.nodeType == 3){ //textNode
+                    var c = sibling.textContent.slice(0,1);
+                    if (doRemove){
+                        sibling.textContent = sibling.textContent.slice(1);
+                        if (sibling.textContent.length === 0){
+                            $(sibling).remove(); //cleanup empty textNodes
+                        }
+                    }
+                    return $(document.createTextNode(c));
+                }
+                else if (sibling.nodeName == 'P'){ //sentenceMarker
+                    if (doRemove){
+                        cursor.next().remove();
+                    }
+                    return $(sibling);
+                }
+            }
+        };
+        
+        var insertNodeNextToCursor = function(c, beforeCursor){
+            var cursor = curDoc.getCursor();
+            if (beforeCursor){
+                var nodeToAddCharTo = cursor[0].previousSibling;
+                if (c[0].nodeType == 3 && nodeToAddCharTo !== null && nodeToAddCharTo.nodeType == 3){
+                    nodeToAddCharTo.textContent += c[0].textContent;
+                }
+                else {
+                    cursor.before(c);
+                }
+            }
+            else {
+                var nodeToAddCharTo = cursor[0].nextSibling;
+                if (c[0].nodeType == 3 && nodeToAddCharTo !== null && nodeToAddCharTo.nodeType == 3){
+                    nodeToAddCharTo.textContent = c[0].textContent+nodeToAddCharTo.textContent;
+                }
+                else {
+                    cursor.after(c);
+                }
+            }
+        };
+        
+        var insertParagraphMarker= function(beforeCursor){
+            var cursor = curDoc.getCursor();
+            var newPar = $("<div class='paragraph active'></div>");
+            var curPar = cursor.parent();
+            curPar.after(newPar);
+            curPar.removeClass("active");
+            followingNode = cursor[0].nextSibling;
+            if (beforeCursor){
+                newPar.append(cursor);
+            }
+            //Append all characters to the new paragraph
+            while(followingNode){
+                nodeToCopy = followingNode;
+                followingNode = nodeToCopy.nextSibling;
+                newPar.append(nodeToCopy);
+            }
+        }
+        
+        var removeParagraphMarker= function(beforeCursor){
+            var cursor = curDoc.getCursor();
+            var thisPar = cursor.parent();
+            var followingPar = thisPar.next();
+            if (followingPar.length > 0){
+                thisPar.append(followingPar.contents());
+            }
+            followingPar.remove();
+        }
+        
+        moveCursor = function(beforeCursor, deleteIt){
+            var sibling = getNodeNextToCursor(beforeCursor, true);
+            if (sibling == null){
+                var cursor = curDoc.getCursor();
+                var parToMoveTo;
+                if (beforeCursor){
+                    parToMoveTo = cursor.parent().prev('.paragraph');
+                }
+                else{
+                    parToMoveTo = cursor.parent().next('.paragraph');
+                }
+                if (parToMoveTo.length > 0){
+                    var curPar = cursor.parent();
+                    parToMoveTo.addClass("active");
+                    cursor.parent().removeClass("active");
+                    if (beforeCursor){
+                        parToMoveTo.append(cursor);
+                    }
+                    else {
+                        parToMoveTo.prepend(cursor);
+                    }
+                }
+                else {
+                    return undefined;
+                }
+                if(deleteIt){
+                    removeParagraphMarker(false);
+                }
+                return 'return';
+            }
+            else {
+                if (!deleteIt){
+                    insertNodeNextToCursor(sibling, !beforeCursor);
+                }
+            }
+            return sibling[0].textContent;
+        };
+        
+        curDoc.insertCharBeforeCursor = function(c){
+            if (c == "return"){
+                insertParagraphMarker(true);
+            }
+            else {
+                if ('.!?'.has(c)){
+                    c = $("<p>"+c+"</p>");
+                }
+                else {
+                    c = $(document.createTextNode(c));
+                }
+                insertNodeNextToCursor(c, true);
+            }
+        }
+        
+        curDoc.deleteCharBeforeCursor = function(){
+            return moveCursor(true, true);
+        }
+        
+        curDoc.moveCursorLeft = function(){
+            moveCursor(true, false);
+        }
+        
+        curDoc.moveCursorRight = function(){
+            moveCursor(false, false);
+        }
+
+        //publish document to the world (should eventually be a separate object that writo uses)
+        writo.document = curDoc;
         //And finally return the writo object
         return writo;
     };

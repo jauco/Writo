@@ -63,3 +63,7 @@ span#cursor {
 #DocumentContainer div.active p {
     border-right: thin solid lightgray;
 }
+
+div.paragraph p {
+    margin-bottom:inherit;
+}
